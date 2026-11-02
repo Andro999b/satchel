@@ -87,10 +87,11 @@ jobs:
           fi
 
   check:
+    needs: [prepare]
     uses: ./.github/workflows/check.yml
 
   build-web:
-    needs: [prepare, check]
+    needs: [check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
