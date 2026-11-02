@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Satchel bag icon</title>
+  <desc id="description">A warm brown satchel with a secure keyhole clasp.</desc>
+  <rect width="512" height="512" rx="112" fill="#F2E9DD"/>
+  <path d="M181 171v-25c0-41 33-74 75-74s75 33 75 74v25h-34v-25c0-22-18-40-41-40s-41 18-41 40v25z" fill="#8C6248"/>
+  <path d="M110 174c0-19 15-34 34-34h224c19 0 34 15 34 34l22 238c2 22-15 40-37 40H125c-22 0-39-18-37-40z" fill="#674A3A"/>
+  <path d="M110 181h292l8 88H102z" fill="#8C6248"/>
+  <path d="M102 269h308l12 143c2 22-15 40-37 40H125c-22 0-39-18-37-40z" fill="#76533F"/>
+  <path d="M226 262a30 30 0 1 1 60 0v19h-60z" fill="#E8C994"/>
+  <rect x="214" y="278" width="84" height="82" rx="20" fill="#E8C994"/>
+  <circle cx="256" cy="309" r="10" fill="#553E32"/>
+  <path d="M250 315h12l7 25h-26z" fill="#553E32"/>
+</svg>
