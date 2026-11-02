@@ -1,0 +1,17 @@
+{
+  "servers": {
+    "dart": {
+      "type": "stdio",
+      "command": "fvm",
+      "args": [
+        "dart",
+        "mcp-server"
+      ]
+    },
+    // "playwright": {
+    //   "type": "stdio",
+    //   "command": "npx",
+    //   "args": ["@playwright/mcp@latest"]
+    // }
+  }
+}

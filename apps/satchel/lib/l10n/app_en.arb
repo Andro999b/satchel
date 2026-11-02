@@ -1,0 +1,1019 @@
+{
+  "@@locale": "en",
+  "appTitle": "Satchel",
+  "@appTitle": {
+    "description": "Application name, shown in the title bar and the storages pane."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Button that closes a dialog without doing anything."
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Button that repeats a failed operation."
+  },
+  "refreshTooltip": "Refresh",
+  "@refreshTooltip": {
+    "description": "Tooltip of the button that re-reads a list."
+  },
+  "nameLabel": "Name",
+  "@nameLabel": {
+    "description": "Label of a text field for a name."
+  },
+  "storageKindIndexedDb": "This browser",
+  "@storageKindIndexedDb": {
+    "description": "Name of the built-in storage that keeps vault files in the web browser."
+  },
+  "storageKindDirectory": "Folder",
+  "@storageKindDirectory": {
+    "description": "Kind of storage that keeps vault files in a folder on the device; also the default name of such a storage."
+  },
+  "addStorage": "Add storage",
+  "@addStorage": {
+    "description": "Button that adds a storage location."
+  },
+  "noStorages": "No storage configured yet",
+  "@noStorages": {
+    "description": "Shown when there are no storages."
+  },
+  "storagesLoadError": "Could not load the storage list",
+  "@storagesLoadError": {
+    "description": "Shown when the saved storages could not be read."
+  },
+  "removeStorageTooltip": "Remove",
+  "@removeStorageTooltip": {
+    "description": "Tooltip of the button that removes a storage from the app."
+  },
+  "folderAlreadyAdded": "This folder is already added",
+  "@folderAlreadyAdded": {
+    "description": "Shown when the picked folder is already a storage."
+  },
+  "addFolderError": "Could not add the folder",
+  "@addFolderError": {
+    "description": "Shown when picking or saving a folder storage failed."
+  },
+  "addFolderTitle": "Add folder",
+  "@addFolderTitle": {
+    "description": "Title of the dialog that names a new folder storage."
+  },
+  "addFolderConfirm": "Add",
+  "@addFolderConfirm": {
+    "description": "Button that adds the folder storage."
+  },
+  "removeStorageTitle": "Remove \"{name}\"?",
+  "@removeStorageTitle": {
+    "description": "Title of the dialog confirming that a storage is removed from the app.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Sync folder"
+      }
+    }
+  },
+  "removeStorageMessage": "Satchel will forget this storage. Files in it are not deleted.",
+  "@removeStorageMessage": {
+    "description": "Explains that removing a storage keeps its files."
+  },
+  "removeStorageConfirm": "Remove",
+  "@removeStorageConfirm": {
+    "description": "Button that confirms removing a storage."
+  },
+  "newFile": "New file",
+  "@newFile": {
+    "description": "Button that creates a vault file."
+  },
+  "noVaultFiles": "No vault files in this storage yet",
+  "@noVaultFiles": {
+    "description": "Shown when a storage has no vault files."
+  },
+  "storageGone": "This storage no longer exists",
+  "@storageGone": {
+    "description": "Shown when the opened storage was removed."
+  },
+  "storageReadError": "Could not read this storage",
+  "@storageReadError": {
+    "description": "Shown when listing the files of a storage failed."
+  },
+  "deleteFileTooltip": "Delete file",
+  "@deleteFileTooltip": {
+    "description": "Tooltip of the button that deletes a vault file."
+  },
+  "deleteFileTitle": "Delete \"{name}\"?",
+  "@deleteFileTitle": {
+    "description": "Title of the dialog confirming that a vault file is deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "deleteFileMessage": "The file and all secrets in it will be permanently deleted from \"{storage}\". This can't be undone.",
+  "@deleteFileMessage": {
+    "description": "Warning in the dialog confirming that a vault file is deleted.",
+    "placeholders": {
+      "storage": {
+        "type": "String",
+        "example": "This browser"
+      }
+    }
+  },
+  "deleteFileConfirm": "Delete",
+  "@deleteFileConfirm": {
+    "description": "Button that confirms deleting a vault file."
+  },
+  "fileDeleted": "Deleted \"{name}\"",
+  "@fileDeleted": {
+    "description": "Shown after a vault file was deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "deleteFileConflict": "\"{name}\" was changed since it was listed, so it was not deleted. Check it and try again.",
+  "@deleteFileConflict": {
+    "description": "Shown when a vault file changed in the storage before it could be deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "deleteFileError": "Could not delete \"{name}\". Check the storage and try again.",
+  "@deleteFileError": {
+    "description": "Shown when deleting a vault file failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "fileActionsTooltip": "More actions",
+  "@fileActionsTooltip": {
+    "description": "Tooltip of the button that opens the menu of actions on a vault file."
+  },
+  "renameFile": "Rename",
+  "@renameFile": {
+    "description": "Menu item that renames a vault file."
+  },
+  "deleteFile": "Delete",
+  "@deleteFile": {
+    "description": "Menu item that deletes a vault file."
+  },
+  "renameFileTitle": "Rename \"{name}\"",
+  "@renameFileTitle": {
+    "description": "Title of the dialog that renames a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "renameFileConfirm": "Rename",
+  "@renameFileConfirm": {
+    "description": "Button that confirms renaming a vault file."
+  },
+  "renameFileConflict": "The file was changed elsewhere since you unlocked it, so it was not renamed. Lock and unlock it to load the latest version, then try again.",
+  "@renameFileConflict": {
+    "description": "Shown when a vault file changed in the storage before it could be renamed."
+  },
+  "renameFileError": "Could not rename the file. Check the storage and try again.",
+  "@renameFileError": {
+    "description": "Shown when renaming a vault file failed."
+  },
+  "changePassword": "Change password",
+  "@changePassword": {
+    "description": "Menu item and button that change the password of a vault file."
+  },
+  "changePasswordTitle": "Change the password of \"{name}\"",
+  "@changePasswordTitle": {
+    "description": "Title of the dialog that changes the password of a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "currentPasswordLabel": "Current password",
+  "@currentPasswordLabel": {
+    "description": "Label of the field for the current password of a vault file."
+  },
+  "newPasswordLabel": "New password",
+  "@newPasswordLabel": {
+    "description": "Label of the field for the new password of a vault file."
+  },
+  "changePasswordConflict": "The file was changed elsewhere since you unlocked it, so the password was not changed. Lock and unlock it to load the latest version, then try again.",
+  "@changePasswordConflict": {
+    "description": "Shown when a vault file changed in the storage before its password could be changed."
+  },
+  "changePasswordError": "Could not change the password. Check the storage and try again.",
+  "@changePasswordError": {
+    "description": "Shown when changing the password of a vault file failed."
+  },
+  "passwordChanged": "Changed the password of \"{name}\"",
+  "@passwordChanged": {
+    "description": "Shown after the password of a vault file was changed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "exportFile": "Export",
+  "@exportFile": {
+    "description": "Menu item that exports every secret of a vault file."
+  },
+  "exportSelected": "Export",
+  "@exportSelected": {
+    "description": "Button that exports the selected secrets."
+  },
+  "exportTitle": "{count, plural, =0{Export an empty file} =1{Export 1 secret} other{Export {count} secrets}}",
+  "@exportTitle": {
+    "description": "Title of the export dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "exportEncrypted": "Encrypted",
+  "@exportEncrypted": {
+    "description": "Choice to export as an encrypted Satchel file."
+  },
+  "exportPlain": "Plain JSON",
+  "@exportPlain": {
+    "description": "Choice to export as an unencrypted JSON file."
+  },
+  "exportEncryptedHint": "A Satchel file that opens with the password of \"{name}\".",
+  "@exportEncryptedHint": {
+    "description": "Explains the encrypted export when it keeps the file's password.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "exportEncryptedNewPasswordHint": "A Satchel file that opens with the new password.",
+  "@exportEncryptedNewPasswordHint": {
+    "description": "Explains the encrypted export when it uses a different password."
+  },
+  "exportUseNewPassword": "Use a different password",
+  "@exportUseNewPassword": {
+    "description": "Checkbox to encrypt the export under another password."
+  },
+  "exportPlainWarning": "This file is not encrypted. Anyone who can open it can read every exported secret, including passwords. Keep it safe and delete it when you no longer need it.",
+  "@exportPlainWarning": {
+    "description": "Warning shown before exporting an unencrypted file."
+  },
+  "exportPlainConfirm": "I understand that this file is not encrypted",
+  "@exportPlainConfirm": {
+    "description": "Checkbox the user must tick before an unencrypted export."
+  },
+  "exportConfirm": "Export",
+  "@exportConfirm": {
+    "description": "Button that saves the export."
+  },
+  "exportError": "Could not export. Try again.",
+  "@exportError": {
+    "description": "Shown when an export failed."
+  },
+  "exported": "Exported to \"{file}\"",
+  "@exported": {
+    "description": "Shown after an export was saved.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Personal.satchel"
+      }
+    }
+  },
+  "importFile": "Import",
+  "@importFile": {
+    "description": "Menu item that imports secrets into a vault file."
+  },
+  "importFileTypeLabel": "Satchel files",
+  "@importFileTypeLabel": {
+    "description": "Name of the file type filter in the import file picker."
+  },
+  "importPasswordTitle": "Password for \"{file}\"",
+  "@importPasswordTitle": {
+    "description": "Title of the dialog asking for the password of a vault file to import.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Work.satchel"
+      }
+    }
+  },
+  "importPasswordMessage": "This file is protected by a different password than the file you import into.",
+  "@importPasswordMessage": {
+    "description": "Explains why the password of a vault file to import is needed."
+  },
+  "importOpen": "Open",
+  "@importOpen": {
+    "description": "Button that decrypts a vault file to import."
+  },
+  "importTitle": "Import \"{file}\"",
+  "@importTitle": {
+    "description": "Title of the dialog reviewing an import.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Work.satchel"
+      }
+    }
+  },
+  "importNew": "{count, plural, =0{No new secrets} =1{1 new secret will be added} other{{count} new secrets will be added}}",
+  "@importNew": {
+    "description": "How many secrets an import adds.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "importIdentical": "{count, plural, =1{1 secret is already in this file and is skipped} other{{count} secrets are already in this file and are skipped}}",
+  "@importIdentical": {
+    "description": "How many imported secrets are identical to existing ones.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "importConflicts": "{count, plural, =1{1 secret differs from the one in this file. Choose which version to keep:} other{{count} secrets differ from the ones in this file. Choose which version to keep:}}",
+  "@importConflicts": {
+    "description": "Heading of the list of conflicting secrets in an import.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "importNothing": "Nothing to import: every secret in this file is already here.",
+  "@importNothing": {
+    "description": "Shown when an import would not change anything."
+  },
+  "importKeepCurrent": "Current",
+  "@importKeepCurrent": {
+    "description": "Short choice to keep the version already in the file, shown above its update date."
+  },
+  "importUseImported": "Imported",
+  "@importUseImported": {
+    "description": "Short choice to replace the secret with the imported version, shown above its update date."
+  },
+  "importKeepAllCurrent": "Keep all current",
+  "@importKeepAllCurrent": {
+    "description": "Button that keeps the current version of every conflicting secret."
+  },
+  "importUseAllImported": "Use all imported",
+  "@importUseAllImported": {
+    "description": "Button that takes the imported version of every conflicting secret."
+  },
+  "importVersion": "{title} · updated {date}",
+  "@importVersion": {
+    "description": "Describes one version of a conflicting secret.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank"
+      },
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026 12:00"
+      }
+    }
+  },
+  "importVersionNewer": "{title} · updated {date} · newer",
+  "@importVersionNewer": {
+    "description": "Describes the more recently updated version of a conflicting secret.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank"
+      },
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026 12:00"
+      }
+    }
+  },
+  "importConfirm": "Import",
+  "@importConfirm": {
+    "description": "Button that applies an import."
+  },
+  "importClose": "Close",
+  "@importClose": {
+    "description": "Button that closes the import dialog when there is nothing to import."
+  },
+  "imported": "{count, plural, =0{Import done, nothing changed} =1{Imported 1 secret} other{Imported {count} secrets}}",
+  "@imported": {
+    "description": "Shown after an import was saved.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "importUnsupported": "Choose a .satchel or .json file",
+  "@importUnsupported": {
+    "description": "Shown when the file to import has another extension."
+  },
+  "importInvalid": "This is not a Satchel file or export",
+  "@importInvalid": {
+    "description": "Shown when the file to import can't be read as a Satchel file."
+  },
+  "importReadError": "Could not read the file. Try again.",
+  "@importReadError": {
+    "description": "Shown when the file to import could not be opened."
+  },
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "description": "Title of the secret list while secrets are selected.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "selectAll": "Select all",
+  "@selectAll": {
+    "description": "Button that selects every secret in the list."
+  },
+  "clearSelection": "Clear selection",
+  "@clearSelection": {
+    "description": "Button that leaves selection mode."
+  },
+  "selectForExport": "Select",
+  "@selectForExport": {
+    "description": "Menu item that selects a secret in the list, e.g. to export it."
+  },
+  "newVaultFileTitle": "New vault file",
+  "@newVaultFileTitle": {
+    "description": "Title of the dialog that creates a vault file."
+  },
+  "passwordLabel": "Password",
+  "@passwordLabel": {
+    "description": "Label of the vault password field."
+  },
+  "passwordHelper": "At least {count, plural, =1{1 character} other{{count} characters}}. It cannot be recovered if lost.",
+  "@passwordHelper": {
+    "description": "Help text below the new vault password field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "confirmPasswordLabel": "Confirm password",
+  "@confirmPasswordLabel": {
+    "description": "Label of the field that repeats the new password."
+  },
+  "showPassword": "Show password",
+  "@showPassword": {
+    "description": "Tooltip of the button that reveals a password field."
+  },
+  "hidePassword": "Hide password",
+  "@hidePassword": {
+    "description": "Tooltip of the button that masks a password field."
+  },
+  "encrypting": "Encrypting…",
+  "@encrypting": {
+    "description": "Shown while a vault file is being encrypted and saved."
+  },
+  "createVaultFile": "Create",
+  "@createVaultFile": {
+    "description": "Button that creates the vault file."
+  },
+  "createVaultFileError": "Could not create the file. Check the storage and try again.",
+  "@createVaultFileError": {
+    "description": "Shown when saving a new vault file failed."
+  },
+  "passwordTooShort": "Use at least {count, plural, =1{1 character} other{{count} characters}}",
+  "@passwordTooShort": {
+    "description": "Validation error when the new password is too short.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "passwordsDontMatch": "Passwords don't match",
+  "@passwordsDontMatch": {
+    "description": "Validation error when the confirmation differs from the password."
+  },
+  "vaultNameTaken": "A file with this name already exists",
+  "@vaultNameTaken": {
+    "description": "Validation error for a vault name that is already used in the storage."
+  },
+  "vaultNameEmpty": "Enter a name",
+  "@vaultNameEmpty": {
+    "description": "Validation error for an empty vault name."
+  },
+  "vaultNameTooLong": "Use at most {count, plural, =1{1 character} other{{count} characters}}",
+  "@vaultNameTooLong": {
+    "description": "Validation error for a vault name that is too long.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "100"
+      }
+    }
+  },
+  "vaultNameSurroundingWhitespace": "Remove spaces at the start or end",
+  "@vaultNameSurroundingWhitespace": {
+    "description": "Validation error for a vault name starting or ending with spaces."
+  },
+  "vaultNameLeadingDot": "Can't start with a dot",
+  "@vaultNameLeadingDot": {
+    "description": "Validation error for a vault name starting with '.'."
+  },
+  "vaultNameTrailingDot": "Can't end with a dot",
+  "@vaultNameTrailingDot": {
+    "description": "Validation error for a vault name ending with '.'."
+  },
+  "vaultNameInvalidCharacter": "Can't contain {characters}",
+  "@vaultNameInvalidCharacter": {
+    "description": "Validation error for a vault name with characters not allowed in file names.",
+    "placeholders": {
+      "characters": {
+        "type": "String",
+        "example": "< > : \" / \\ | ? *"
+      }
+    }
+  },
+  "vaultNameReserved": "This name is reserved by Windows",
+  "@vaultNameReserved": {
+    "description": "Validation error for names such as CON or NUL that Windows reserves."
+  },
+  "selectStorage": "Select a storage",
+  "@selectStorage": {
+    "description": "Shown in the files pane before a storage is selected."
+  },
+  "selectVaultFile": "Select a vault file",
+  "@selectVaultFile": {
+    "description": "Shown in the secrets pane before a vault file is selected."
+  },
+  "selectSecret": "Select a secret",
+  "@selectSecret": {
+    "description": "Shown in the secret pane before a secret is selected."
+  },
+  "fileLocked": "Locked",
+  "@fileLocked": {
+    "description": "Accessibility label and tooltip of the icon for a locked vault file."
+  },
+  "fileUnlocked": "Unlocked",
+  "@fileUnlocked": {
+    "description": "Accessibility label and tooltip of the icon for an unlocked vault file."
+  },
+  "lockedFileMessage": "This file is locked. Enter its password to open it.",
+  "@lockedFileMessage": {
+    "description": "Shown above the password field of a locked vault file."
+  },
+  "unlock": "Unlock",
+  "@unlock": {
+    "description": "Button that decrypts a vault file with the entered password."
+  },
+  "unlocking": "Unlocking…",
+  "@unlocking": {
+    "description": "Shown while a vault file is being decrypted."
+  },
+  "lockTooltip": "Lock",
+  "@lockTooltip": {
+    "description": "Tooltip of the button that locks an unlocked vault file."
+  },
+  "noSecrets": "No secrets in this file yet",
+  "@noSecrets": {
+    "description": "Shown when an unlocked vault file has no secrets."
+  },
+  "newSecret": "New secret",
+  "@newSecret": {
+    "description": "Button that adds a secret to the unlocked vault file."
+  },
+  "secretTypePassword": "Password",
+  "@secretTypePassword": {
+    "description": "Kind of secret: a single password."
+  },
+  "secretTypeLogin": "Login",
+  "@secretTypeLogin": {
+    "description": "Kind of secret: an account with username, password and website."
+  },
+  "secretTypePem": "Key or certificate",
+  "@secretTypePem": {
+    "description": "Kind of secret: a PEM key or certificate."
+  },
+  "secretTypeRecoveryCodes": "Recovery codes",
+  "@secretTypeRecoveryCodes": {
+    "description": "Kind of secret: single-use backup codes of an account."
+  },
+  "secretTypeNote": "Secure note",
+  "@secretTypeNote": {
+    "description": "Kind of secret: free-form secret text."
+  },
+  "newSecretTitle": "{type, select, password{New password} login{New login} pem{New key or certificate} recoveryCodes{New recovery codes} note{New secure note} other{New secret}}",
+  "@newSecretTitle": {
+    "description": "Title of the editor creating a secret of the given kind.",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "login"
+      }
+    }
+  },
+  "closeEditorTooltip": "Close",
+  "@closeEditorTooltip": {
+    "description": "Tooltip of the button that closes the secret editor without saving."
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Button that saves the secret."
+  },
+  "saving": "Saving…",
+  "@saving": {
+    "description": "Shown while the vault file is being encrypted and saved."
+  },
+  "saveError": "Could not save. Check the storage and try again.",
+  "@saveError": {
+    "description": "Shown when saving the vault file failed."
+  },
+  "saveConflict": "The file was changed elsewhere since you unlocked it, so nothing was saved. Lock and unlock it to load the latest version, then try again.",
+  "@saveConflict": {
+    "description": "Shown when the vault file changed in the storage after it was unlocked."
+  },
+  "titleLabel": "Title",
+  "@titleLabel": {
+    "description": "Label of the secret title field."
+  },
+  "titleRequired": "Enter a title",
+  "@titleRequired": {
+    "description": "Validation error for an empty secret title."
+  },
+  "usernameLabel": "Username",
+  "@usernameLabel": {
+    "description": "Label of the login username field."
+  },
+  "urlLabel": "Website",
+  "@urlLabel": {
+    "description": "Label of the login sign-in URL field."
+  },
+  "totpLabel": "Two-factor key (TOTP)",
+  "@totpLabel": {
+    "description": "Label of the field for the login's two-factor authentication seed."
+  },
+  "generatePassword": "Generate password",
+  "@generatePassword": {
+    "description": "Tooltip of the button that fills in a random password."
+  },
+  "passwordRequired": "Enter a password",
+  "@passwordRequired": {
+    "description": "Validation error for an empty password."
+  },
+  "pemLabel": "PEM",
+  "@pemLabel": {
+    "description": "Label of the field holding a PEM key or certificate."
+  },
+  "pemInvalid": "Paste a PEM block starting with -----BEGIN",
+  "@pemInvalid": {
+    "description": "Validation error for text that is not PEM."
+  },
+  "recoveryCodesLabel": "Codes",
+  "@recoveryCodesLabel": {
+    "description": "Label of the recovery codes field."
+  },
+  "recoveryCodesRequired": "Enter at least one code",
+  "@recoveryCodesRequired": {
+    "description": "Validation error when no recovery code was entered."
+  },
+  "noteTextLabel": "Secret text",
+  "@noteTextLabel": {
+    "description": "Label of the secure note text field."
+  },
+  "noteTextRequired": "Enter the text",
+  "@noteTextRequired": {
+    "description": "Validation error for an empty secure note."
+  },
+  "tagsLabel": "Tags",
+  "@tagsLabel": {
+    "description": "Label of the secret tags field."
+  },
+  "notesLabel": "Notes",
+  "@notesLabel": {
+    "description": "Label of the free-text notes field of a secret."
+  },
+  "tagsHint": "work, finance",
+  "@tagsHint": {
+    "description": "Example tags shown in the empty tags field; tags are separated by commas."
+  },
+  "totpHint": "otpauth:// link or base32 key",
+  "@totpHint": {
+    "description": "Hint in the empty TOTP field."
+  },
+  "pemHint": "Paste the key or certificate, including the BEGIN and END lines",
+  "@pemHint": {
+    "description": "Hint in the empty PEM field."
+  },
+  "recoveryCodesHint": "One code per line",
+  "@recoveryCodesHint": {
+    "description": "Hint in the empty recovery codes field."
+  },
+  "validForLabel": "Valid for",
+  "@validForLabel": {
+    "description": "Label of the field for how many days a secret stays valid."
+  },
+  "validForSuffix": "days",
+  "@validForSuffix": {
+    "description": "Unit shown after the number in the validity field."
+  },
+  "validForHint": "Never expires",
+  "@validForHint": {
+    "description": "Hint in the empty validity field: the secret has no expiry."
+  },
+  "validForPreset": "{days, plural, =1{1 day} other{{days} days}}",
+  "@validForPreset": {
+    "description": "Chip that sets the validity to a number of days.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "validForInvalid": "Enter 1 to {max} days",
+  "@validForInvalid": {
+    "description": "Validation error for an invalid number of days.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "36500"
+      }
+    }
+  },
+  "moreOptions": "More options",
+  "@moreOptions": {
+    "description": "Header of the collapsible section with optional secret fields."
+  },
+  "moreOptionsHint": "Tags, notes, expiry and custom fields",
+  "@moreOptionsHint": {
+    "description": "Description of the collapsed optional section."
+  },
+  "expiresOn": "Expires {date}",
+  "@expiresOn": {
+    "description": "Expiry date of a secret; date is already formatted.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Jan 1, 2027"
+      }
+    }
+  },
+  "customFieldsTitle": "Custom fields",
+  "@customFieldsTitle": {
+    "description": "Heading of the list of user-defined fields of a secret."
+  },
+  "addCustomField": "Add field",
+  "@addCustomField": {
+    "description": "Button that adds a custom field to a secret."
+  },
+  "customFieldLabel": "Label",
+  "@customFieldLabel": {
+    "description": "Label of the name field of a custom field."
+  },
+  "customFieldValue": "Value",
+  "@customFieldValue": {
+    "description": "Label of the value field of a custom field."
+  },
+  "customFieldLabelRequired": "Enter a label",
+  "@customFieldLabelRequired": {
+    "description": "Validation error for a custom field without a label."
+  },
+  "customFieldConcealed": "Masked until revealed",
+  "@customFieldConcealed": {
+    "description": "Tooltip of the toggle of a custom field whose value is masked when viewing the secret."
+  },
+  "customFieldVisible": "Always visible",
+  "@customFieldVisible": {
+    "description": "Tooltip of the toggle of a custom field whose value is shown unmasked when viewing the secret."
+  },
+  "editSecretTitle": "{type, select, password{Edit password} login{Edit login} pem{Edit key or certificate} recoveryCodes{Edit recovery codes} note{Edit secure note} other{Edit secret}}",
+  "@editSecretTitle": {
+    "description": "Title of the editor changing an existing secret of the given kind.",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "login"
+      }
+    }
+  },
+  "editTooltip": "Edit",
+  "@editTooltip": {
+    "description": "Tooltip of the button that edits the secret."
+  },
+  "deleteSecretTooltip": "Delete secret",
+  "@deleteSecretTooltip": {
+    "description": "Tooltip of the button that deletes the secret."
+  },
+  "secretActionsTooltip": "More actions",
+  "@secretActionsTooltip": {
+    "description": "Tooltip of the button that opens the menu of actions on a secret in the list."
+  },
+  "editSecret": "Edit",
+  "@editSecret": {
+    "description": "Menu item that edits a secret."
+  },
+  "deleteSecret": "Delete",
+  "@deleteSecret": {
+    "description": "Menu item that deletes a secret."
+  },
+  "deleteSecretTitle": "Delete \"{title}\"?",
+  "@deleteSecretTitle": {
+    "description": "Title of the dialog confirming that a secret is deleted.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Example Bank"
+      }
+    }
+  },
+  "deleteSecretMessage": "The secret will be permanently removed from \"{file}\". This can't be undone.",
+  "@deleteSecretMessage": {
+    "description": "Warning in the dialog confirming that a secret is deleted.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "secretDeleted": "Deleted \"{title}\"",
+  "@secretDeleted": {
+    "description": "Shown after a secret was deleted.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Example Bank"
+      }
+    }
+  },
+  "secretNotFound": "This secret no longer exists",
+  "@secretNotFound": {
+    "description": "Shown in the detail pane when the secret was removed."
+  },
+  "revealTooltip": "Show",
+  "@revealTooltip": {
+    "description": "Tooltip of the button that reveals a masked value."
+  },
+  "hideTooltip": "Hide",
+  "@hideTooltip": {
+    "description": "Tooltip of the button that masks a revealed value."
+  },
+  "copyTooltip": "Copy",
+  "@copyTooltip": {
+    "description": "Tooltip of the button that copies a value to the clipboard."
+  },
+  "copied": "{field} copied. The clipboard is cleared in {seconds, plural, =1{1 second} other{{seconds} seconds}}.",
+  "@copied": {
+    "description": "Shown after a value was copied; field is the label of the copied value.",
+    "placeholders": {
+      "field": {
+        "type": "String",
+        "example": "Password"
+      },
+      "seconds": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "openUrlTooltip": "Open in browser",
+  "@openUrlTooltip": {
+    "description": "Tooltip of the button that opens the login's website."
+  },
+  "openUrlError": "Could not open the website",
+  "@openUrlError": {
+    "description": "Shown when the website could not be opened."
+  },
+  "showAll": "Show all",
+  "@showAll": {
+    "description": "Button that expands a collapsed long value."
+  },
+  "showLess": "Show less",
+  "@showLess": {
+    "description": "Button that collapses a long value again."
+  },
+  "privateKeyHidden": "Contains a private key",
+  "@privateKeyHidden": {
+    "description": "Shown instead of a PEM document holding a private key until it is revealed."
+  },
+  "recoveryCodesLeft": "{count, plural, =0{No codes left} =1{1 code left} other{{count} codes left}}",
+  "@recoveryCodesLeft": {
+    "description": "Number of unused recovery codes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "recoveryCodesLow": "Few codes left. Generate new ones on the website soon.",
+  "@recoveryCodesLow": {
+    "description": "Warning when only a few recovery codes are unused."
+  },
+  "markCodeUsed": "Mark as used",
+  "@markCodeUsed": {
+    "description": "Tooltip of the checkbox that marks a recovery code as used."
+  },
+  "markCodeUnused": "Mark as unused",
+  "@markCodeUnused": {
+    "description": "Tooltip of the checkbox that marks a recovery code as unused again."
+  },
+  "expiredOn": "Expired {date}",
+  "@expiredOn": {
+    "description": "Expiry of a secret whose date has passed; date is already formatted.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Jan 1, 2026"
+      }
+    }
+  },
+  "expiresInDays": "{days, plural, =0{Expires today} =1{Expires tomorrow} other{Expires in {days} days}}",
+  "@expiresInDays": {
+    "description": "How soon a secret expires, in calendar days.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "expiredDaysAgo": "{days, plural, =0{Expired today} =1{Expired yesterday} other{Expired {days} days ago}}",
+  "@expiredDaysAgo": {
+    "description": "How long ago a secret expired, in calendar days.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "createdOn": "Created {date}",
+  "@createdOn": {
+    "description": "When the secret was created; date is already formatted.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026, 14:00"
+      }
+    }
+  },
+  "updatedOn": "Updated {date}",
+  "@updatedOn": {
+    "description": "When the secret was last changed; date is already formatted.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026, 14:00"
+      }
+    }
+  },
+  "removeCustomField": "Remove field",
+  "@removeCustomField": {
+    "description": "Tooltip of the button that removes a custom field."
+  },
+  "unlockWrongPassword": "Wrong password, or the file is damaged",
+  "@unlockWrongPassword": {
+    "description": "Unlock error. Decryption cannot tell a wrong password from a modified file."
+  },
+  "unlockNeedsExtraInputs": "This file needs a key file, which this version of Satchel doesn't support",
+  "@unlockNeedsExtraInputs": {
+    "description": "Unlock error for files protected with extra key inputs."
+  },
+  "unlockNewerVersion": "This file was created by a newer version of Satchel",
+  "@unlockNewerVersion": {
+    "description": "Unlock error for files of an unknown format version."
+  },
+  "unlockInvalidFile": "This is not a valid Satchel file",
+  "@unlockInvalidFile": {
+    "description": "Unlock error for files that are not vault files."
+  },
+  "unlockReadError": "Could not read the file. Check the storage and try again.",
+  "@unlockReadError": {
+    "description": "Unlock error when the storage could not be read."
+  }
+}

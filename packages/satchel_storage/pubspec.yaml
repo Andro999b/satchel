@@ -1,0 +1,25 @@
+name: satchel_storage
+description: Satchel storage provider interface and implementations (local, Google Drive).
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  crypto: ^3.0.8
+  file_selector: ^1.1.0
+  flutter:
+    sdk: flutter
+  path: ^1.9.1
+  saf_stream: ^4.0.3
+  saf_util: ^3.1.1
+  satchel_core:
+    path: ../satchel_core
+  web: ^1.1.2
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

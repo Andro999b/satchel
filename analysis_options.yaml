@@ -1,0 +1,24 @@
+# Shared analyzer settings. Each workspace member includes this file together
+# with its lint set (package:lints or package:flutter_lints).
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/build/**"
+    - ".fvm/**"
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - cancel_subscriptions
+    - close_sinks
+    - prefer_final_fields
+    - prefer_final_locals
+    - unawaited_futures

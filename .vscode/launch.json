@@ -1,0 +1,58 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "satchel",
+            "cwd": "apps/satchel",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--web-port",
+                "8080"
+            ]
+        },
+        {
+            "name": "satchel (profile mode)",
+            "cwd": "apps/satchel",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "satchel (release mode)",
+            "cwd": "apps/satchel",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "satchel_core",
+            "cwd": "packages/satchel_core",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "satchel_storage",
+            "cwd": "packages/satchel_storage",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "satchel_storage (profile mode)",
+            "cwd": "packages/satchel_storage",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "satchel_storage (release mode)",
+            "cwd": "packages/satchel_storage",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

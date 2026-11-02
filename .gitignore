@@ -1,0 +1,21 @@
+# FVM: local SDK link (version is pinned in .fvmrc)
+.fvm/
+
+# Dart / Flutter
+.dart_tool/
+build/
+coverage/
+.flutter-plugins-dependencies
+.pub-cache/
+doc/api/
+
+# Generated code (run build_runner after `pub get`)
+*.g.dart
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# Generated localizations (flutter gen-l10n, run by `flutter pub get`)
+apps/satchel/lib/l10n/app_localizations*.dart
