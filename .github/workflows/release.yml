@@ -6,10 +6,10 @@
 # Bump the pubspec version before releasing: the tag vX.Y.Z must not exist.
 #
 # Required repository settings (Settings → Secrets and variables → Actions):
-#   variable GOOGLE_WEB_CLIENT_ID       OAuth "Web application" client id
-#   secret   FIREBASE_SERVICE_ACCOUNT   JSON key of a service account that may
-#                                       deploy to Firebase Hosting
-#   secret   ANDROID_KEYSTORE_BASE64    `base64 -w0 upload-keystore.jks`
+#   variable GOOGLE_WEB_CLIENT_ID                     OAuth "Web application" client id
+#   secret   FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313   JSON key of a service account that may
+#                                                     deploy to Firebase Hosting
+#   secret   ANDROID_KEYSTORE_BASE64                  `base64 -w0 upload-keystore.jks`
 #   secret   ANDROID_KEYSTORE_PASSWORD
 #   secret   ANDROID_KEY_ALIAS
 #   secret   ANDROID_KEY_PASSWORD
@@ -68,7 +68,7 @@ jobs:
       - name: Check required secrets and variables
         env:
           GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313 }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -76,7 +76,7 @@ jobs:
         run: |
           missing=()
           [ -n "$GOOGLE_WEB_CLIENT_ID" ] || missing+=("variable GOOGLE_WEB_CLIENT_ID")
-          [ -n "$FIREBASE_SERVICE_ACCOUNT" ] || missing+=("secret FIREBASE_SERVICE_ACCOUNT")
+          [ -n "$FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313" ] || missing+=("secret FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313")
           [ -n "$ANDROID_KEYSTORE_BASE64" ] || missing+=("secret ANDROID_KEYSTORE_BASE64")
           [ -n "$ANDROID_KEYSTORE_PASSWORD" ] || missing+=("secret ANDROID_KEYSTORE_PASSWORD")
           [ -n "$ANDROID_KEY_ALIAS" ] || missing+=("secret ANDROID_KEY_ALIAS")
@@ -205,7 +205,7 @@ jobs:
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SATCHEL_21313 }}
           channelId: live
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
 
