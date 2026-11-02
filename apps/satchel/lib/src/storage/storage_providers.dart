@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import '../accounts/google_accounts.dart';
 import 'storage_config_store.dart';
 
 part 'storage_providers.g.dart';
@@ -17,12 +18,18 @@ StoragePlatform? storagePlatform(Ref ref) => StoragePlatform.current;
 List<StorageProviderKind> availableStorageKinds(Ref ref) =>
     StorageProviderKind.supportedOn(ref.watch(storagePlatformProvider));
 
-/// Storage kinds the user can add on this platform.
+/// Storage kinds the user can add on this platform. Google Drive needs
+/// Google sign-in to be configured in this build.
 @riverpod
-List<StorageProviderKind> addableStorageKinds(Ref ref) => [
-  for (final kind in ref.watch(availableStorageKindsProvider))
-    if (kind.userAddable) kind,
-];
+List<StorageProviderKind> addableStorageKinds(Ref ref) {
+  final googleSignIn = ref.watch(googleAuthProvider) != null;
+  return [
+    for (final kind in ref.watch(availableStorageKindsProvider))
+      if (kind.userAddable &&
+          (kind != StorageProviderKind.googleDrive || googleSignIn))
+        kind,
+  ];
+}
 
 @Riverpod(keepAlive: true)
 StorageConfigStore storageConfigStore(Ref ref) =>
@@ -53,15 +60,20 @@ class StorageConfigs extends _$StorageConfigs {
   Future<PickedDirectory?> pickDirectory() =>
       ref.read(directoryPickerProvider).pick();
 
-  /// Whether a storage for [location] already exists.
-  Future<bool> hasLocation(String location) async =>
-      (await future).any((config) => config.location == location);
+  /// Whether a storage for [location] (of [accountId]) already exists.
+  Future<bool> hasLocation(String location, {String? accountId}) async =>
+      (await future).any(
+        (config) =>
+            config.location == location && config.accountId == accountId,
+      );
 
   /// Adds a storage of a user-addable [kind] and persists it.
   Future<StorageConfig> add({
     required StorageProviderKind kind,
     required String displayName,
     String? location,
+    String? locationName,
+    String? accountId,
   }) async {
     if (!kind.userAddable) {
       throw ArgumentError.value(kind, 'kind', 'Cannot be added by the user');
@@ -69,7 +81,10 @@ class StorageConfigs extends _$StorageConfigs {
     if (kind.requiresLocation && location == null) {
       throw ArgumentError.notNull('location');
     }
-    if (location != null && await hasLocation(location)) {
+    if (kind.requiresAccount && accountId == null) {
+      throw ArgumentError.notNull('accountId');
+    }
+    if (location != null && await hasLocation(location, accountId: accountId)) {
       throw ArgumentError.value(location, 'location', 'Already added');
     }
     final config = StorageConfig(
@@ -77,6 +92,8 @@ class StorageConfigs extends _$StorageConfigs {
       kind: kind,
       displayName: displayName,
       location: location,
+      locationName: locationName,
+      accountId: accountId,
     );
     final store = ref.read(storageConfigStoreProvider);
     final saved = [...await store.load(), config];
@@ -128,10 +145,27 @@ class StorageConfigs extends _$StorageConfigs {
 
 /// Storage locations configured by the user. Top of the
 /// provider → file → secret hierarchy.
+///
+/// Drive storages sign in with their linked Google account; one whose
+/// account isn't linked (anymore) fails with `StorageAuthRequiredException`.
 @riverpod
 Future<List<StorageProvider>> storageProviders(Ref ref) async {
   final configs = await ref.watch(storageConfigsProvider.future);
-  final storages = [for (final config in configs) config.kind.create(config)];
+  final usesGoogle = configs.any((config) => config.kind.requiresAccount);
+  final googleAuth = usesGoogle ? ref.watch(googleAuthProvider) : null;
+  final googleAccounts = usesGoogle
+      ? await ref.watch(googleAccountsProvider.future)
+      : const <GoogleAccount>[];
+  final storages = [
+    for (final config in configs)
+      config.kind.create(
+        config,
+        googleAuth: googleAuth,
+        googleAccount: googleAccounts
+            .where((account) => account.id == config.accountId)
+            .firstOrNull,
+      ),
+  ];
   ref.onDispose(() {
     for (final storage in storages) {
       if (storage is IndexedDbStorageProvider) unawaited(storage.close());

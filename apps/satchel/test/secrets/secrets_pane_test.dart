@@ -163,6 +163,15 @@ void main() {
       findsOneWidget,
     );
     expect(isUnlocked(), isFalse);
+
+    storage.readError = const StorageAuthRequiredException('', accountId: 'a');
+    await unlockWith(tester, 'hunter22');
+    expect(
+      find.text(
+        'Could not sign in to the Google account of this storage. Try again.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('lock button locks the file again', (tester) async {

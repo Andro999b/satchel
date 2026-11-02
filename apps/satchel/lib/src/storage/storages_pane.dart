@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import '../accounts/account_management_dialog.dart';
+import '../accounts/google_accounts.dart';
 import '../navigation/app_location.dart';
 import 'storage_actions.dart';
 import 'storage_display.dart';
@@ -22,14 +24,20 @@ class StoragesPane extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.appTitle)),
-      floatingActionButton: canAdd
-          ? FloatingActionButton.extended(
-              onPressed: () => addStorage(context, ref),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.addStorage),
-            )
-          : null,
+      appBar: AppBar(
+        title: Text(l10n.appTitle),
+        actions: [
+          IconButton(
+            tooltip: l10n.manageAccountsTooltip,
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (context) => const AccountManagementDialog(),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: canAdd ? const _AddStorageButton() : null,
       body: configs.when(
         data: (configs) => configs.isEmpty
             ? Center(child: Text(l10n.noStorages))
@@ -46,6 +54,41 @@ class StoragesPane extends ConsumerWidget {
   }
 }
 
+/// "Add storage" button: adds the only addable kind directly, or offers a
+/// menu of the kinds.
+class _AddStorageButton extends ConsumerWidget {
+  const _AddStorageButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final kinds = ref.watch(addableStorageKindsProvider);
+    if (kinds case [final only]) {
+      return FloatingActionButton.extended(
+        onPressed: () => addStorage(context, ref, only),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addStorage),
+      );
+    }
+    return MenuAnchor(
+      menuChildren: [
+        for (final kind in kinds)
+          MenuItemButton(
+            leadingIcon: Icon(storageIcon(kind)),
+            onPressed: () => addStorage(context, ref, kind),
+            child: Text(storageKindName(l10n, kind)),
+          ),
+      ],
+      builder: (context, controller, _) => FloatingActionButton.extended(
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addStorage),
+      ),
+    );
+  }
+}
+
 class _StorageTile extends ConsumerWidget {
   const _StorageTile({required this.config, required this.open});
 
@@ -54,13 +97,21 @@ class _StorageTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = config.location;
+    final accountEmail = config.accountId == null
+        ? null
+        : ref
+              .watch(googleAccountsProvider)
+              .value
+              ?.where((account) => account.id == config.accountId)
+              .firstOrNull
+              ?.email;
+    final location = storageLocationText(config, accountEmail: accountEmail);
     return ListTile(
       key: ValueKey(config.id),
       selected: open,
       leading: Icon(storageIcon(config.kind)),
       title: Text(storageName(context.l10n, config)),
-      subtitle: location == null ? null : Text(describeLocation(location)),
+      subtitle: location == null ? null : Text(location),
       onTap: () =>
           ref.read(currentLocationProvider.notifier).openStorage(config.id),
       trailing: config.kind.userAddable

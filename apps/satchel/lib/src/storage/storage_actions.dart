@@ -2,38 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import 'add_google_drive.dart';
 import 'storage_display.dart';
 import 'storage_providers.dart';
 import '../l10n/l10n.dart';
+import '../navigation/app_location.dart';
 
-/// Lets the user add a storage: choose a kind (if there are several), then
-/// configure it.
-Future<void> addStorage(BuildContext context, WidgetRef ref) async {
-  final kinds = ref.read(addableStorageKindsProvider);
-  final kind = switch (kinds) {
-    [] => null,
-    [final only] => only,
-    _ => await showModalBottomSheet<StorageProviderKind>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final kind in kinds)
-              ListTile(
-                leading: Icon(storageIcon(kind)),
-                title: Text(storageKindName(context.l10n, kind)),
-                onTap: () => Navigator.pop(context, kind),
-              ),
-          ],
-        ),
-      ),
-    ),
-  };
-  if (kind == null || !context.mounted) return;
+/// Lets the user configure and add a storage of [kind], then opens it.
+Future<void> addStorage(
+  BuildContext context,
+  WidgetRef ref,
+  StorageProviderKind kind,
+) async {
   switch (kind) {
     case StorageProviderKind.directory:
       await _addDirectory(context, ref);
+    case StorageProviderKind.googleDrive:
+      await addGoogleDrive(context, ref);
     case StorageProviderKind.indexedDb:
       // Built in, never offered.
       break;
@@ -42,6 +27,7 @@ Future<void> addStorage(BuildContext context, WidgetRef ref) async {
 
 Future<void> _addDirectory(BuildContext context, WidgetRef ref) async {
   final notifier = ref.read(storageConfigsProvider.notifier);
+  final location = ref.read(currentLocationProvider.notifier);
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
   try {
@@ -62,11 +48,12 @@ Future<void> _addDirectory(BuildContext context, WidgetRef ref) async {
       ),
     );
     if (name == null) return;
-    await notifier.add(
+    final config = await notifier.add(
       kind: StorageProviderKind.directory,
       displayName: name,
       location: picked.location,
     );
+    location.openStorage(config.id);
   } catch (_) {
     messenger.showSnackBar(SnackBar(content: Text(l10n.addFolderError)));
   }

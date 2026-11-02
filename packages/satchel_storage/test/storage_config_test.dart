@@ -11,6 +11,14 @@ void main() {
         location: '/home/me/Sync',
       ),
       StorageConfig(
+        id: '3',
+        kind: StorageProviderKind.googleDrive,
+        displayName: 'Drive',
+        location: 'folder-id',
+        locationName: 'My Drive / Satchel',
+        accountId: 'ada',
+      ),
+      StorageConfig(
         id: '2',
         kind: StorageProviderKind.indexedDb,
         displayName: 'This browser',
@@ -20,7 +28,10 @@ void main() {
     for (final config in configs) {
       expect(StorageConfig.fromJson(config.toJson()), config);
     }
-    expect(configs.last.toJson(), isNot(contains('location')));
+    expect(
+      configs.last.toJson().keys,
+      unorderedEquals(['id', 'kind', 'displayName']),
+    );
   });
 
   test('rejects unknown kinds and malformed input', () {
@@ -42,6 +53,15 @@ void main() {
         'kind': 'directory',
         'displayName': 'x',
         'location': 42,
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => StorageConfig.fromJson({
+        'id': '1',
+        'kind': 'googleDrive',
+        'displayName': 'x',
+        'accountId': 1,
       }),
       throwsFormatException,
     );

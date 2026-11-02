@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel/src/files/files_pane.dart';
+import 'package:satchel/src/navigation/app_location.dart';
 import 'package:satchel/src/navigation/app_shell.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel_storage/satchel_storage.dart';
@@ -22,13 +23,28 @@ void main() {
     WidgetTester tester,
     StoragePlatform platform, {
     List<StorageProvider>? storages,
+    bool fakeStorages = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ...storageOverrides(platform: platform, store: store, picker: picker),
+          ...googleAccountOverrides(store: MemoryGoogleAccountStore()),
           if (storages != null)
-            storageProvidersProvider.overrideWith((ref) async => storages),
+            storageProvidersProvider.overrideWith((ref) async => storages)
+          else if (fakeStorages)
+            // An empty in-memory storage for every configured one.
+            storageProvidersProvider.overrideWith(
+              (ref) async => [
+                for (final config in await ref.watch(
+                  storageConfigsProvider.future,
+                ))
+                  FakeStorageProvider(
+                    id: config.id,
+                    displayName: config.displayName,
+                  ),
+              ],
+            ),
         ],
         child: testApp(const AppShell()),
       ),
@@ -41,6 +57,20 @@ void main() {
 
     expect(find.text('No storage configured yet'), findsOneWidget);
     expect(find.text('Add storage'), findsOneWidget);
+  });
+
+  testWidgets('opens Google account management from settings', (tester) async {
+    await pumpStorages(tester, StoragePlatform.linux);
+
+    await tester.tap(find.byTooltip('Accounts and settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Google accounts'), findsOneWidget);
+    expect(find.text('No Google accounts connected'), findsOneWidget);
+    expect(
+      find.text("Google sign-in isn't set up in this build of Satchel."),
+      findsOneWidget,
+    );
   });
 
   testWidgets('web lists the built-in browser storage only', (tester) async {
@@ -94,12 +124,12 @@ void main() {
     expect(find.text('bank'), findsOneWidget);
   });
 
-  testWidgets('adds a folder picked by the user', (tester) async {
+  testWidgets('adds a folder picked by the user and opens it', (tester) async {
     picker.next = const PickedDirectory(
       location: '/home/me/Sync',
       name: 'Sync',
     );
-    await pumpStorages(tester, StoragePlatform.linux);
+    await pumpStorages(tester, StoragePlatform.linux, fakeStorages: true);
 
     await tester.tap(find.text('Add storage'));
     await tester.pumpAndSettle();
@@ -108,9 +138,17 @@ void main() {
     await tester.tap(find.text('Add'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Synced vaults'), findsOneWidget);
     expect(store.configs.single.displayName, 'Synced vaults');
     expect(store.configs.single.location, '/home/me/Sync');
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(AppShell)),
+    );
+    expect(
+      container.read(currentLocationProvider),
+      AppLocation(storageId: store.configs.single.id),
+    );
+    expect(find.byType(FilesPane), findsOneWidget);
+    expect(find.text('Select a storage'), findsNothing);
   });
 
   testWidgets('cancelling the picker adds nothing', (tester) async {
@@ -133,6 +171,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.configs, isEmpty);
+    expect(find.text('Select a storage'), findsOneWidget);
   });
 
   testWidgets('refuses a folder that is already added', (tester) async {

@@ -2,6 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import 'directory/directory_platform.dart';
 import 'directory/directory_storage_provider.dart';
+import 'google/google_account.dart';
+import 'google/google_auth.dart';
+import 'google/google_drive_api.dart';
+import 'google/google_drive_storage_provider.dart';
 import 'indexed_db_storage_provider.dart';
 import 'storage_config.dart';
 import 'storage_provider.dart';
@@ -52,6 +56,19 @@ enum StorageProviderKind {
       StoragePlatform.windows,
     },
     userAddable: true,
+  ),
+
+  /// A folder in the Google Drive of a linked Google account, through the
+  /// Drive REST API. Users can add several.
+  googleDrive(
+    defaultDisplayName: 'Google Drive',
+    platforms: {
+      StoragePlatform.web,
+      StoragePlatform.android,
+      StoragePlatform.linux,
+      StoragePlatform.windows,
+    },
+    userAddable: true,
   );
 
   const StorageProviderKind({
@@ -73,7 +90,10 @@ enum StorageProviderKind {
   final bool userAddable;
 
   /// Whether `StorageConfig.location` must be set for this kind.
-  bool get requiresLocation => this == directory;
+  bool get requiresLocation => this == directory || this == googleDrive;
+
+  /// Whether `StorageConfig.accountId` must be set for this kind.
+  bool get requiresAccount => this == googleDrive;
 
   bool isSupportedOn(StoragePlatform? platform) =>
       platform != null && platforms.contains(platform);
@@ -89,15 +109,33 @@ enum StorageProviderKind {
 
   /// Creates the provider described by [config], which must be of this kind.
   ///
+  /// Drive storages sign in with [googleAuth] as [googleAccount], the linked
+  /// account with `config.accountId`. Without them the storage fails with
+  /// `StorageAuthRequiredException`.
+  ///
   /// Check [isSupported] first: on other platforms creating or using the
   /// provider throws [UnsupportedError].
-  StorageProvider create(StorageConfig config) {
+  StorageProvider create(
+    StorageConfig config, {
+    GoogleAuth? googleAuth,
+    GoogleAccount? googleAccount,
+  }) {
     if (config.kind != this) {
       throw ArgumentError.value(config, 'config', 'Not a $name config');
     }
     final location = config.location;
     if (requiresLocation && location == null) {
       throw ArgumentError.value(config, 'config', 'Missing location');
+    }
+    if (requiresAccount && config.accountId == null) {
+      throw ArgumentError.value(config, 'config', 'Missing account');
+    }
+    if (googleAccount != null && googleAccount.id != config.accountId) {
+      throw ArgumentError.value(
+        googleAccount,
+        'googleAccount',
+        'Other account',
+      );
     }
     return switch (this) {
       indexedDb => IndexedDbStorageProvider(
@@ -108,6 +146,14 @@ enum StorageProviderKind {
         id: config.id,
         displayName: config.displayName,
         backend: directoryBackendFor(location!),
+      ),
+      googleDrive => GoogleDriveStorageProvider(
+        id: config.id,
+        displayName: config.displayName,
+        folderId: location!,
+        api: GoogleDriveApi(
+          GoogleDriveTokens(auth: googleAuth, account: googleAccount),
+        ),
       ),
     };
   }

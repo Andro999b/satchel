@@ -17,5 +17,15 @@ doc/api/
 *.iml
 .DS_Store
 
+# Google OAuth clients for --dart-define-from-file (copy google_oauth.example.json)
+apps/satchel/google_oauth.json
+
+apps/satchel/android/app/google-services.json
+
 # Generated localizations (flutter gen-l10n, run by `flutter pub get`)
 apps/satchel/lib/l10n/app_localizations*.dart
+
+# Firebase CLI cache and logs (firebase.json and .firebaserc are committed)
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*

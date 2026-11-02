@@ -24,6 +24,8 @@ void main() {
     WidgetTester tester, {
     String storageId = 's',
     VoidCallback? onBack,
+    StorageConfig? config,
+    List<GoogleAccount> accounts = const [],
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -31,8 +33,12 @@ void main() {
           ...storageOverrides(
             platform: StoragePlatform.linux,
             store: MemoryStorageConfigStore([
-              directoryConfig('s', '/s', name: 'Sync folder'),
+              config ?? directoryConfig('s', '/s', name: 'Sync folder'),
             ]),
+          ),
+          ...googleAccountOverrides(
+            store: MemoryGoogleAccountStore(accounts),
+            auth: FakeGoogleAuth(),
           ),
           storageProvidersProvider.overrideWith((ref) async => [storage]),
           vaultCryptoProvider.overrideWithValue(
@@ -61,6 +67,53 @@ void main() {
     await pumpFiles(tester);
 
     expect(find.text('No vault files in this storage yet'), findsOneWidget);
+  });
+
+  group('Google Drive', () {
+    const ada = GoogleAccount(id: 'ada', email: 'ada@example.com');
+    final config = driveConfig('s', 'folder', accountId: 'ada', name: 'Drive');
+
+    testWidgets('asks to sign in again, and lists after signing in', (
+      tester,
+    ) async {
+      storage.listError = const StorageAuthRequiredException(
+        '',
+        accountId: 'ada',
+      );
+      await pumpFiles(tester, config: config, accounts: [ada]);
+
+      expect(
+        find.text('Sign in to Google to open this storage'),
+        findsOneWidget,
+      );
+      storage
+        ..listError = null
+        ..paths = ['personal.satchel'];
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('personal'), findsOneWidget);
+    });
+
+    testWidgets('points to Accounts when the account is gone', (tester) async {
+      storage.listError = const StorageAuthRequiredException(
+        '',
+        accountId: 'ada',
+      );
+      await pumpFiles(tester, config: config);
+
+      expect(
+        find.text(
+          "The Google account of this storage isn't connected. "
+          'Add it again under Accounts.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Accounts'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Google accounts'), findsOneWidget);
+    });
   });
 
   testWidgets('shows storage errors and retries', (tester) async {

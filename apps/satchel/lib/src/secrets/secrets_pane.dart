@@ -311,6 +311,7 @@ enum _UnlockError {
   newerVersion,
   invalidFile,
   readFailed,
+  signInRequired,
 }
 
 class _UnlockForm extends ConsumerStatefulWidget {
@@ -357,6 +358,8 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
       error = _UnlockError.newerVersion;
     } on VaultFormatException {
       error = _UnlockError.invalidFile;
+    } on StorageAuthRequiredException {
+      error = _UnlockError.signInRequired;
     } on StorageException {
       error = _UnlockError.readFailed;
     } catch (_) {
@@ -392,6 +395,7 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
       _UnlockError.newerVersion => l10n.unlockNewerVersion,
       _UnlockError.invalidFile => l10n.unlockInvalidFile,
       _UnlockError.readFailed => l10n.unlockReadError,
+      _UnlockError.signInRequired => l10n.unlockSignInRequired,
     };
     return Center(
       child: SingleChildScrollView(

@@ -4,6 +4,118 @@
   "@appTitle": {
     "description": "Application name, shown in the title bar and the storages pane."
   },
+  "manageAccountsTooltip": "Accounts and settings",
+  "@manageAccountsTooltip": {
+    "description": "Tooltip for the settings button on the storages pane."
+  },
+  "googleAccountsTitle": "Google accounts",
+  "@googleAccountsTitle": {
+    "description": "Title of the Google account management dialog."
+  },
+  "noGoogleAccounts": "No Google accounts connected",
+  "@noGoogleAccounts": {
+    "description": "Empty state in the Google account management dialog."
+  },
+  "googleAccountsHint": "Connect a Google account to keep vault files in its Google Drive. Satchel can only see the files it creates there.",
+  "@googleAccountsHint": {
+    "description": "Explains what connecting a Google account is for, below the empty state."
+  },
+  "googleSignInNotConfigured": "Google sign-in isn't set up in this build of Satchel.",
+  "@googleSignInNotConfigured": {
+    "description": "Explains why Google accounts can't be added: the build has no OAuth client for this platform."
+  },
+  "googleAccountsLoadError": "Could not load the connected accounts",
+  "@googleAccountsLoadError": {
+    "description": "Shown when the saved Google accounts could not be read."
+  },
+  "addGoogleAccount": "Add account",
+  "@addGoogleAccount": {
+    "description": "Button that signs in with a Google account and connects it."
+  },
+  "googleSigningIn": "Signing in…",
+  "@googleSigningIn": {
+    "description": "Shown while Google sign-in is in progress."
+  },
+  "googleSignInInBrowser": "Continue in your browser to sign in.",
+  "@googleSignInInBrowser": {
+    "description": "Shown on desktop while Google sign-in waits for the user in the web browser."
+  },
+  "googleAccountAdded": "Connected {email}",
+  "@googleAccountAdded": {
+    "description": "Shown after a Google account was connected.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "ada@example.com"
+      }
+    }
+  },
+  "googleAccountReconnected": "Signed in to {email} again",
+  "@googleAccountReconnected": {
+    "description": "Shown after signing in with a Google account that was already connected, which renews its access.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "ada@example.com"
+      }
+    }
+  },
+  "googleDriveAccessDenied": "Satchel needs access to Google Drive to keep vault files there. Add the account again and allow access.",
+  "@googleDriveAccessDenied": {
+    "description": "Shown when the user signed in but didn't allow access to Google Drive."
+  },
+  "googleSignInFailed": "Could not sign in to Google. Check your connection and try again.",
+  "@googleSignInFailed": {
+    "description": "Shown when Google sign-in failed."
+  },
+  "removeGoogleAccountTooltip": "Remove account",
+  "@removeGoogleAccountTooltip": {
+    "description": "Tooltip of the button that disconnects a Google account."
+  },
+  "removeGoogleAccountTitle": "Remove {email}?",
+  "@removeGoogleAccountTitle": {
+    "description": "Title of the dialog confirming that a Google account is disconnected.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "ada@example.com"
+      }
+    }
+  },
+  "removeGoogleAccountMessage": "Satchel will sign out of this account on this device. Files in its Google Drive are not deleted.",
+  "@removeGoogleAccountMessage": {
+    "description": "Explains what disconnecting a Google account does."
+  },
+  "removeGoogleAccountStorages": "{count, plural, =1{1 Google Drive storage uses this account. It won't open until you add the account again.} other{{count} Google Drive storages use this account. They won't open until you add the account again.}}",
+  "@removeGoogleAccountStorages": {
+    "description": "Warning when removing a Google account that Drive storages use.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "removeGoogleAccountConfirm": "Remove",
+  "@removeGoogleAccountConfirm": {
+    "description": "Button that confirms disconnecting a Google account."
+  },
+  "removeGoogleAccountError": "Could not remove the account. Try again.",
+  "@removeGoogleAccountError": {
+    "description": "Shown when disconnecting a Google account failed."
+  },
+  "googleBrowserSignInDone": "You're signed in. You can close this tab and go back to Satchel.",
+  "@googleBrowserSignInDone": {
+    "description": "Web page shown in the browser after a desktop Google sign-in succeeded."
+  },
+  "googleBrowserSignInFailed": "Sign-in didn't finish. You can close this tab and try again in Satchel.",
+  "@googleBrowserSignInFailed": {
+    "description": "Web page shown in the browser after a desktop Google sign-in was denied or failed."
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Button that closes a dialog."
+  },
   "cancel": "Cancel",
   "@cancel": {
     "description": "Button that closes a dialog without doing anything."
@@ -23,6 +135,82 @@
   "storageKindIndexedDb": "This browser",
   "@storageKindIndexedDb": {
     "description": "Name of the built-in storage that keeps vault files in the web browser."
+  },
+  "storageKindGoogleDrive": "Google Drive",
+  "@storageKindGoogleDrive": {
+    "description": "Kind of storage that keeps vault files in a folder of a Google Drive; also the default name of such a storage."
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Button that goes back to the previous step of a dialog."
+  },
+  "addDriveTitle": "Add Google Drive",
+  "@addDriveTitle": {
+    "description": "Title of the dialog that adds a Google Drive storage."
+  },
+  "driveChooseAccount": "Choose the Google account whose Drive keeps the vault files.",
+  "@driveChooseAccount": {
+    "description": "First step of adding a Google Drive storage."
+  },
+  "driveNoAccounts": "No Google account is connected yet. Add one to continue.",
+  "@driveNoAccounts": {
+    "description": "Shown when adding a Google Drive storage without any connected Google account."
+  },
+  "driveMyDrive": "My Drive",
+  "@driveMyDrive": {
+    "description": "Name of the top folder of a Google Drive, as Google calls it."
+  },
+  "driveUpTooltip": "Up",
+  "@driveUpTooltip": {
+    "description": "Tooltip of the button that goes to the parent Drive folder."
+  },
+  "driveNoFolders": "No folders here that Satchel can use",
+  "@driveNoFolders": {
+    "description": "Shown when a Drive folder has no subfolders Satchel can see."
+  },
+  "driveFoldersHint": "Satchel only sees folders it created, on any of your devices. Use \"New folder\" to create one, or use this folder.",
+  "@driveFoldersHint": {
+    "description": "Explains why existing Drive folders are not listed when choosing a folder."
+  },
+  "driveNewFolder": "New folder",
+  "@driveNewFolder": {
+    "description": "Button and dialog title for creating a Drive folder."
+  },
+  "driveCreateFolder": "Create",
+  "@driveCreateFolder": {
+    "description": "Button that creates the Drive folder."
+  },
+  "driveUseFolder": "Use this folder",
+  "@driveUseFolder": {
+    "description": "Button that chooses the current Drive folder for the storage."
+  },
+  "driveFoldersLoadError": "Could not load the folders.",
+  "@driveFoldersLoadError": {
+    "description": "Shown when listing Drive folders failed."
+  },
+  "driveCreateFolderError": "Could not create the folder.",
+  "@driveCreateFolderError": {
+    "description": "Shown when creating a Drive folder failed."
+  },
+  "addDriveError": "Could not add the Google Drive storage",
+  "@addDriveError": {
+    "description": "Shown when saving a new Google Drive storage failed."
+  },
+  "driveSignInRequired": "Sign in to Google to open this storage",
+  "@driveSignInRequired": {
+    "description": "Shown instead of the files of a Google Drive storage when the user has to sign in to its account."
+  },
+  "driveSignIn": "Sign in",
+  "@driveSignIn": {
+    "description": "Button that signs in to the Google account of a Drive storage."
+  },
+  "driveAccountMissing": "The Google account of this storage isn't connected. Add it again under Accounts.",
+  "@driveAccountMissing": {
+    "description": "Shown instead of the files of a Google Drive storage whose Google account was removed."
+  },
+  "openAccounts": "Accounts",
+  "@openAccounts": {
+    "description": "Button that opens the Google account management dialog."
   },
   "storageKindDirectory": "Folder",
   "@storageKindDirectory": {
@@ -1015,5 +1203,9 @@
   "unlockReadError": "Could not read the file. Check the storage and try again.",
   "@unlockReadError": {
     "description": "Unlock error when the storage could not be read."
+  },
+  "unlockSignInRequired": "Could not sign in to the Google account of this storage. Try again.",
+  "@unlockSignInRequired": {
+    "description": "Unlock error when signing in to the Google account of a Drive storage was cancelled or failed."
   }
 }

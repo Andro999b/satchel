@@ -1,0 +1,5 @@
+{
+  "GOOGLE_WEB_CLIENT_ID": "<id>.apps.googleusercontent.com",
+  "GOOGLE_DESKTOP_CLIENT_ID": "<id>.apps.googleusercontent.com",
+  "GOOGLE_DESKTOP_CLIENT_SECRET": "<desktop client secret>"
+}

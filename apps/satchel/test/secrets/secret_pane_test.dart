@@ -577,8 +577,21 @@ void main() {
           matching: find.text('Delete'),
         ),
       );
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(DestructiveDialog),
+          matching: find.byType(LinearProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      final cancel = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'Cancel'),
+      );
+      expect(cancel.onPressed, isNull);
       await settleCrypto(tester, find.text('never shown'));
 
+      expect(find.byType(DestructiveDialog), findsNothing);
       expect((await stored(tester)).map((s) => s.id), isNot(contains('note')));
       expect(container.read(currentLocationProvider).secretId, isNull);
       expect(find.text('closed'), findsOneWidget);

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import 'fake_google_drive.dart';
+
 void main() {
   test('IndexedDB is supported on web only', () {
     final kind = StorageProviderKind.indexedDb;
@@ -27,9 +29,21 @@ void main() {
     expect(kind.isSupportedOn(null), isFalse);
   });
 
+  test('Google Drive is supported on every platform', () {
+    for (final platform in StoragePlatform.values) {
+      expect(
+        StorageProviderKind.googleDrive.isSupportedOn(platform),
+        isTrue,
+        reason: '$platform',
+      );
+    }
+    expect(StorageProviderKind.googleDrive.isSupportedOn(null), isFalse);
+  });
+
   test('supportedOn lists the kinds available on a platform', () {
     expect(StorageProviderKind.supportedOn(StoragePlatform.web), [
       StorageProviderKind.indexedDb,
+      StorageProviderKind.googleDrive,
     ]);
     for (final platform in [
       StoragePlatform.android,
@@ -38,15 +52,84 @@ void main() {
     ]) {
       expect(StorageProviderKind.supportedOn(platform), [
         StorageProviderKind.directory,
+        StorageProviderKind.googleDrive,
       ]);
     }
   });
 
-  test('only directory storages are added by the user', () {
+  test('folders and Drive are added by the user', () {
     expect(StorageProviderKind.indexedDb.userAddable, isFalse);
     expect(StorageProviderKind.indexedDb.requiresLocation, isFalse);
+    expect(StorageProviderKind.indexedDb.requiresAccount, isFalse);
     expect(StorageProviderKind.directory.userAddable, isTrue);
     expect(StorageProviderKind.directory.requiresLocation, isTrue);
+    expect(StorageProviderKind.directory.requiresAccount, isFalse);
+    expect(StorageProviderKind.googleDrive.userAddable, isTrue);
+    expect(StorageProviderKind.googleDrive.requiresLocation, isTrue);
+    expect(StorageProviderKind.googleDrive.requiresAccount, isTrue);
+  });
+
+  group('Google Drive', () {
+    const account = GoogleAccount(id: 'ada', email: 'ada@example.com');
+    const config = StorageConfig(
+      id: 'd',
+      kind: StorageProviderKind.googleDrive,
+      displayName: 'Drive',
+      location: 'folder',
+      accountId: 'ada',
+    );
+
+    test('create builds a Drive provider for the folder', () {
+      final storage = StorageProviderKind.googleDrive.create(
+        config,
+        googleAuth: FakeTokenAuth(),
+        googleAccount: account,
+      );
+
+      expect(
+        storage,
+        isA<GoogleDriveStorageProvider>()
+            .having((s) => s.id, 'id', 'd')
+            .having((s) => s.folderId, 'folderId', 'folder'),
+      );
+    });
+
+    test('a storage without its account needs a sign-in', () {
+      final storage = StorageProviderKind.googleDrive.create(config);
+
+      expect(storage.list(), throwsA(isA<StorageAuthRequiredException>()));
+    });
+
+    test('create rejects configs without account or folder', () {
+      const noAccount = StorageConfig(
+        id: 'd',
+        kind: StorageProviderKind.googleDrive,
+        displayName: 'Drive',
+        location: 'folder',
+      );
+      const noFolder = StorageConfig(
+        id: 'd',
+        kind: StorageProviderKind.googleDrive,
+        displayName: 'Drive',
+        accountId: 'ada',
+      );
+
+      expect(
+        () => StorageProviderKind.googleDrive.create(noAccount),
+        throwsArgumentError,
+      );
+      expect(
+        () => StorageProviderKind.googleDrive.create(noFolder),
+        throwsArgumentError,
+      );
+      expect(
+        () => StorageProviderKind.googleDrive.create(
+          config,
+          googleAccount: const GoogleAccount(id: 'bob', email: 'b@b.c'),
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 
   test('create builds the provider described by the config', () {

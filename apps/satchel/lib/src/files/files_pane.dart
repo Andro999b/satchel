@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import '../accounts/account_management_dialog.dart';
+import '../accounts/google_accounts.dart';
 import '../export/export_secrets.dart';
 import '../import/import_secrets.dart';
 import '../navigation/app_location.dart';
@@ -85,23 +87,52 @@ class FilesPane extends ConsumerWidget {
                   ],
                 ),
         ),
-        error: (error, _) => MessageView(
-          icon: Icons.error_outline,
-          text: switch (error) {
-            UnknownStorageException() => l10n.storageGone,
-            _ => l10n.storageReadError,
-          },
-          detail: switch (error) {
-            StorageBackendException(:final message) => message,
-            _ => null,
-          },
-          action: error is UnknownStorageException
-              ? null
-              : FilledButton.tonal(
-                  onPressed: () => ref.invalidate(provider),
-                  child: Text(l10n.retry),
+        error: (error, _) {
+          // A Drive storage whose Google account isn't linked anymore.
+          final accountMissing =
+              error is StorageAuthRequiredException &&
+              !(ref
+                      .watch(googleAccountsProvider)
+                      .value
+                      ?.any((account) => account.id == config?.accountId) ??
+                  false);
+          return MessageView(
+            icon: error is StorageAuthRequiredException
+                ? Icons.account_circle_outlined
+                : Icons.error_outline,
+            text: switch (error) {
+              UnknownStorageException() => l10n.storageGone,
+              StorageAuthRequiredException() when accountMissing =>
+                l10n.driveAccountMissing,
+              StorageAuthRequiredException() => l10n.driveSignInRequired,
+              _ => l10n.storageReadError,
+            },
+            detail: switch (error) {
+              StorageBackendException(:final message) => message,
+              _ => null,
+            },
+            action: switch (error) {
+              UnknownStorageException() => null,
+              StorageAuthRequiredException() when accountMissing =>
+                FilledButton.tonal(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => const AccountManagementDialog(),
+                  ),
+                  child: Text(l10n.openAccounts),
                 ),
-        ),
+              // Listing again signs in, from this button press.
+              StorageAuthRequiredException() => FilledButton.tonal(
+                onPressed: () => ref.invalidate(provider),
+                child: Text(l10n.driveSignIn),
+              ),
+              _ => FilledButton.tonal(
+                onPressed: () => ref.invalidate(provider),
+                child: Text(l10n.retry),
+              ),
+            },
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );

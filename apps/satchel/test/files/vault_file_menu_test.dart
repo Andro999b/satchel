@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -324,6 +326,43 @@ void main() {
         container.read(currentLocationProvider),
         const AppLocation(storageId: 's'),
       );
+    });
+
+    testWidgets('shows progress until the delete finishes', (tester) async {
+      await pumpFiles(tester);
+      final gate = Completer<void>();
+      storage.deleteGate = gate.future;
+
+      await choose(tester, 'Delete');
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DeleteVaultFileDialog),
+          matching: find.text('Delete'),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(DeleteVaultFileDialog),
+          matching: find.byType(LinearProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'))
+            .onPressed,
+        isNull,
+      );
+      expect(storage.paths, contains(vault.path));
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DeleteVaultFileDialog), findsNothing);
+      expect(storage.paths, ['work.satchel']);
+      expect(find.text('Deleted "personal"'), findsOneWidget);
     });
 
     testWidgets('deletes an unlocked file and locks it', (tester) async {

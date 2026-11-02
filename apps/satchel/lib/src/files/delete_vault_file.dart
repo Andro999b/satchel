@@ -9,25 +9,28 @@ import 'vault_file.dart';
 import 'vault_files_providers.dart';
 
 /// Asks for confirmation, then deletes [file] from its storage
-/// ([storageName] is shown in the warning). Closes the file if it is open
-/// and reports the outcome in a snack bar.
+/// ([storageName] is shown in the warning) while the dialog shows progress.
+/// Closes the file if it is open and reports the outcome in a snack bar.
 Future<void> deleteVaultFile(
   BuildContext context,
   WidgetRef ref,
   VaultFile file, {
   required String storageName,
 }) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) =>
-        DeleteVaultFileDialog(name: file.name, storageName: storageName),
-  );
-  if (!(confirmed ?? false) || !context.mounted) return;
-
   final l10n = context.l10n;
   final messenger = ScaffoldMessenger.of(context);
-  final message = await _delete(ref, file, l10n);
-  messenger.showSnackBar(SnackBar(content: Text(message)));
+  String? message;
+  await showDialog<bool>(
+    context: context,
+    builder: (context) => DeleteVaultFileDialog(
+      name: file.name,
+      storageName: storageName,
+      onConfirm: () async => message = await _delete(ref, file, l10n),
+    ),
+  );
+  if (message case final message?) {
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
 }
 
 /// Deletes [file] and returns the message describing the outcome.
@@ -48,16 +51,19 @@ Future<String> _delete(
   return l10n.fileDeleted(file.name);
 }
 
-/// Confirms deleting a vault file. Pops `true` to delete.
+/// Confirms deleting a vault file, then runs [onConfirm] while showing
+/// progress (see [DestructiveDialog]). Pops `true` once it is done.
 class DeleteVaultFileDialog extends StatelessWidget {
   const DeleteVaultFileDialog({
     super.key,
     required this.name,
     required this.storageName,
+    this.onConfirm,
   });
 
   final String name;
   final String storageName;
+  final Future<void> Function()? onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +72,7 @@ class DeleteVaultFileDialog extends StatelessWidget {
       title: l10n.deleteFileTitle(name),
       message: l10n.deleteFileMessage(storageName),
       confirmLabel: l10n.deleteFileConfirm,
+      onConfirm: onConfirm,
     );
   }
 }

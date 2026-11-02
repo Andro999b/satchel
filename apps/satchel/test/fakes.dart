@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/misc.dart';
+import 'package:satchel/src/accounts/google_account_store.dart';
+import 'package:satchel/src/accounts/google_accounts.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel/src/storage/storage_config_store.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
@@ -84,6 +87,21 @@ StorageConfig directoryConfig(String id, String location, {String? name}) =>
       location: location,
     );
 
+StorageConfig driveConfig(
+  String id,
+  String folderId, {
+  required String accountId,
+  String? name,
+  String? locationName,
+}) => StorageConfig(
+  id: id,
+  kind: StorageProviderKind.googleDrive,
+  displayName: name ?? id,
+  location: folderId,
+  locationName: locationName,
+  accountId: accountId,
+);
+
 /// Overrides for a fake platform, preference store and picker.
 List<Override> storageOverrides({
   required StoragePlatform? platform,
@@ -93,6 +111,102 @@ List<Override> storageOverrides({
   storagePlatformProvider.overrideWithValue(platform),
   storageConfigStoreProvider.overrideWithValue(store),
   directoryPickerProvider.overrideWithValue(picker ?? FakeDirectoryPicker()),
+];
+
+final class MemoryGoogleAccountStore implements GoogleAccountStore {
+  MemoryGoogleAccountStore([List<GoogleAccount> accounts = const []])
+    : accounts = [...accounts];
+
+  List<GoogleAccount> accounts;
+
+  @override
+  Future<List<GoogleAccount>> load() async => [...accounts];
+
+  @override
+  Future<void> save(List<GoogleAccount> accounts) async {
+    this.accounts = [...accounts];
+  }
+}
+
+/// [GoogleAuth] that signs in as [next] without any UI.
+final class FakeGoogleAuth implements GoogleAuth {
+  GoogleAccount? next;
+  Object? signInError;
+  Object? signOutError;
+
+  /// While set, [signIn] waits for it, like a browser sign-in in progress.
+  Completer<GoogleAccount?>? pending;
+
+  int cancelCalls = 0;
+  final signedOut = <GoogleAccount>[];
+
+  @override
+  Future<GoogleAccount?> signIn() async {
+    if (signInError case final error?) throw error;
+    if (pending case final pending?) return pending.future;
+    return next;
+  }
+
+  @override
+  void cancelSignIn() {
+    cancelCalls++;
+    if (pending case final pending? when !pending.isCompleted) {
+      pending.complete(null);
+    }
+  }
+
+  @override
+  Future<String> accessToken(
+    GoogleAccount account, {
+    bool interactive = false,
+  }) async => 'token-${account.id}';
+
+  @override
+  Future<void> invalidateToken(
+    GoogleAccount account,
+    String accessToken,
+  ) async {}
+
+  @override
+  Future<void> signOut(GoogleAccount account) async {
+    if (signOutError case final error?) throw error;
+    signedOut.add(account);
+  }
+}
+
+/// In-memory Drive folders, by parent folder id.
+final class FakeDriveFolderSource implements DriveFolderSource {
+  final folders = <String, List<DriveFolder>>{};
+  Object? listError;
+  Object? createError;
+  final listed = <String>[];
+  final created = <(String, String)>[];
+  var _ids = 0;
+
+  @override
+  Future<List<DriveFolder>> list(String parentId) async {
+    listed.add(parentId);
+    if (listError case final error?) throw error;
+    return [...?folders[parentId]];
+  }
+
+  @override
+  Future<DriveFolder> create(String parentId, String name) async {
+    if (createError case final error?) throw error;
+    final folder = DriveFolder(id: 'new${++_ids}', name: name);
+    (folders[parentId] ??= []).add(folder);
+    created.add((parentId, name));
+    return folder;
+  }
+}
+
+/// Overrides for Google sign-in: [auth] `null` means not configured.
+List<Override> googleAccountOverrides({
+  required GoogleAccountStore store,
+  GoogleAuth? auth,
+}) => [
+  googleAuthProvider.overrideWithValue(auth),
+  googleAccountStoreProvider.overrideWithValue(store),
 ];
 
 /// In-memory [StorageProvider] with the conditional write semantics of the
@@ -119,6 +233,9 @@ final class FakeStorageProvider implements StorageProvider {
   Object? readError;
   Object? writeError;
   Object? deleteError;
+
+  /// If set, deletes wait for it to complete, so tests can see the progress.
+  Future<void>? deleteGate;
 
   /// Flips a byte of every written blob, like a storage corrupting data.
   bool corruptWrites = false;
@@ -182,6 +299,7 @@ final class FakeStorageProvider implements StorageProvider {
 
   @override
   Future<void> delete(String path, {required String expectedRevision}) async {
+    if (deleteGate case final gate?) await gate;
     if (deleteError case final error?) throw error;
     final current = blobs[path]?.revision;
     if (current == null) throw StorageNotFoundException(path);

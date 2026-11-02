@@ -67,7 +67,7 @@ void main() {
     );
     expect(
       StorageProviderKind.values.map((kind) => storageKindName(l10n, kind)),
-      ['This browser', 'Folder'],
+      ['This browser', 'Folder', 'Google Drive'],
     );
   });
 }

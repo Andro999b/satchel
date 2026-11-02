@@ -44,3 +44,15 @@ final class StorageBackendException extends StorageException {
   @override
   String toString() => 'StorageBackendException: $path: $message';
 }
+
+/// The storage needs the user to sign in (again), e.g. to the Google account
+/// of a Drive storage. Retrying from a user action signs in.
+final class StorageAuthRequiredException extends StorageException {
+  const StorageAuthRequiredException(super.path, {this.accountId});
+
+  /// The account to sign in to, if known.
+  final String? accountId;
+
+  @override
+  String toString() => 'StorageAuthRequiredException: $path ($accountId)';
+}
