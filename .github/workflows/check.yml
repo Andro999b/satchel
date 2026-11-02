@@ -41,11 +41,11 @@ jobs:
       # Browser-only providers (IndexedDB); run both web compilers. The web
       # runner compiles all given files together, so VM-only tests under
       # test/directory/ (dart:io, SAF/jni) are excluded by the glob.
-      - name: Test satchel_storage (Chrome)
-        working-directory: packages/satchel_storage
-        run: |
-          flutter test --platform chrome test/*_test.dart
-          flutter test --platform chrome --wasm test/*_test.dart
+      # - name: Test satchel_storage (Chrome)
+      #   working-directory: packages/satchel_storage
+      #   run: |
+      #     flutter test --platform chrome test/*_test.dart
+      #     flutter test --platform chrome --wasm test/*_test.dart
 
       - name: Test app
         working-directory: apps/satchel

@@ -1,31 +1,31 @@
 {
-    "hosting": {
-        "public": "apps/satchel/build/web",
-        "ignore": [
-            "firebase.json",
-            "**/.*",
-            "**/node_modules/**"
-        ],
-        "rewrites": [
-            {
-                "source": "**",
-                "destination": "/index.html"
-            }
-        ],
+  "hosting": {
+    "public": "apps/satchel/build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**",
         "headers": [
-            {
-                "source": "**",
-                "headers": [
-                    {
-                        "key": "Cross-Origin-Opener-Policy",
-                        "value": "same-origin-allow-popups"
-                    },
-                    {
-                        "key": "Cross-Origin-Embedder-Policy",
-                        "value": "credentialless"
-                    }
-                ]
-            }
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin-allow-popups"
+          },
+          {
+            "key": "Cross-Origin-Embedder-Policy",
+            "value": "credentialless"
+          }
         ]
-    }
+      }
+    ]
+  }
 }
