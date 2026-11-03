@@ -268,6 +268,11 @@ void main() {
         ExpiryStatus.valid,
       );
       expect(
+        secret.expiryStatus(DateTime.utc(2026, 11, 16, 23, 59)),
+        ExpiryStatus.valid,
+      );
+      // Exactly the 14-day warning period before the expiry.
+      expect(
         secret.expiryStatus(DateTime.utc(2026, 11, 17)),
         ExpiryStatus.expiringSoon,
       );

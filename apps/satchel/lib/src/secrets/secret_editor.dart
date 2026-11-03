@@ -97,7 +97,7 @@ class _SecretEditorState extends ConsumerState<SecretEditor> {
   static const maxValidDays = 36500;
 
   /// Validity presets offered as chips, in days.
-  static const validityPresets = [30, 90, 180, 365];
+  static const validityPresets = [30, 60, 90, 180, 365];
 
   static const _gap = SizedBox(height: 12);
 

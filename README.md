@@ -2,6 +2,8 @@
 
 Satchel is an offline-capable password and secrets keeper built with Flutter. Vaults are encrypted on your device and stored in locations you choose; Satchel has no backend.
 
+Try the [deployed web app](https://satchel-21313.firebaseapp.com/).
+
 The app supports web, Android, Linux, and Windows. It can store vaults locally or in Google Drive, and organize passwords, logins, notes, recovery codes, and other secrets in encrypted vault files.
 
 ## Getting started

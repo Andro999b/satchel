@@ -346,7 +346,7 @@ void main() {
       tester
           .widgetList<ActionChip>(find.byType(ActionChip))
           .map((chip) => (chip.label as Text).data),
-      ['30 days', '90 days', '180 days', '365 days'],
+      ['30 days', '60 days', '90 days', '180 days', '365 days'],
     );
     await tapVisible(tester, find.text('365 days'));
     expect(

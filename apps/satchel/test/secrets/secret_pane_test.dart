@@ -57,7 +57,7 @@ final _login = LoginSecret(
 );
 
 final _password = PasswordSecret(
-  info: _info('pw', 'Wi-Fi', expiresAt: DateTime.utc(2026, 11, 20)),
+  info: _info('pw', 'Wi-Fi', expiresAt: DateTime.utc(2026, 11, 12)),
   password: 'c0rrect-h0rse',
 );
 
@@ -282,7 +282,7 @@ void main() {
     );
     expect(
       tester.widget<Text>(find.byKey(const Key('expiry'))).data,
-      startsWith('Expires Nov 20, 2026'),
+      startsWith('Expires Nov 12, 2026'),
     );
   });
 
@@ -489,7 +489,7 @@ void main() {
     ) async {
       await pumpSecret(tester, _password);
       await openEditor(tester);
-      expect(field(tester, 'validDays').text, '18');
+      expect(field(tester, 'validDays').text, '10');
       await tester.enterText(
         find.descendant(
           of: find.byType(SecretEditor),
