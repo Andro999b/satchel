@@ -268,7 +268,7 @@ void main() {
         ExpiryStatus.valid,
       );
       expect(
-        secret.expiryStatus(DateTime.utc(2026, 11, 1)),
+        secret.expiryStatus(DateTime.utc(2026, 11, 17)),
         ExpiryStatus.expiringSoon,
       );
       expect(
