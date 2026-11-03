@@ -340,6 +340,86 @@
       }
     }
   },
+  "copyFile": "Copy to…",
+  "@copyFile": {
+    "description": "Menu item that copies a vault file to another storage."
+  },
+  "copyFileTitle": "Copy \"{name}\" to",
+  "@copyFileTitle": {
+    "description": "Title of the dialog that picks the storage to copy a vault file to.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "copyFileNoStorages": "Add another storage to copy files to.",
+  "@copyFileNoStorages": {
+    "description": "Shown in the copy dialog when there is no other storage."
+  },
+  "fileCopied": "Copied \"{name}\" to \"{storage}\"",
+  "@fileCopied": {
+    "description": "Shown after a vault file was copied to another storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      },
+      "storage": {
+        "type": "String",
+        "example": "Google Drive"
+      }
+    }
+  },
+  "copyFileConflict": "\"{name}\" or the file it would replace was changed meanwhile, so nothing was copied. Check them and try again.",
+  "@copyFileConflict": {
+    "description": "Shown when the vault file to copy, or the file it would replace, changed before the copy.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "copyFileError": "Could not copy \"{name}\" to \"{storage}\". Check the storages and try again.",
+  "@copyFileError": {
+    "description": "Shown when copying a vault file failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      },
+      "storage": {
+        "type": "String",
+        "example": "Google Drive"
+      }
+    }
+  },
+  "replaceFileTitle": "Replace \"{name}\"?",
+  "@replaceFileTitle": {
+    "description": "Title of the dialog confirming that a copied vault file replaces an existing one.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "replaceFileMessage": "\"{storage}\" already has a file with this name. It and all secrets in it will be replaced by the copy. This can't be undone.",
+  "@replaceFileMessage": {
+    "description": "Warning in the dialog confirming that a copied vault file replaces an existing one.",
+    "placeholders": {
+      "storage": {
+        "type": "String",
+        "example": "Google Drive"
+      }
+    }
+  },
+  "replaceFileConfirm": "Replace",
+  "@replaceFileConfirm": {
+    "description": "Button that confirms replacing an existing vault file with a copy."
+  },
   "fileActionsTooltip": "More actions",
   "@fileActionsTooltip": {
     "description": "Tooltip of the button that opens the menu of actions on a vault file."
@@ -420,7 +500,7 @@
   },
   "exportSelected": "Export",
   "@exportSelected": {
-    "description": "Button that exports the selected secrets."
+    "description": "Tooltip of the button that exports the selected secrets."
   },
   "exportTitle": "{count, plural, =0{Export an empty file} =1{Export 1 secret} other{Export {count} secrets}}",
   "@exportTitle": {
@@ -627,6 +707,74 @@
   "importReadError": "Could not read the file. Try again.",
   "@importReadError": {
     "description": "Shown when the file to import could not be opened."
+  },
+  "copySecrets": "Copy to another file",
+  "@copySecrets": {
+    "description": "Tooltip of the button that copies the selected secrets to another vault file."
+  },
+  "copySecretsTitle": "{count, plural, =1{Copy 1 secret to} other{Copy {count} secrets to}}",
+  "@copySecretsTitle": {
+    "description": "Title of the dialog that picks the vault file to copy secrets to.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "copySecretsNoFiles": "No other files in this storage.",
+  "@copySecretsNoFiles": {
+    "description": "Shown when a storage has no vault file to copy secrets to."
+  },
+  "copySecretsReviewTitle": "Copy to \"{file}\"",
+  "@copySecretsReviewTitle": {
+    "description": "Title of the dialog reviewing a copy of secrets into a vault file.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "copySecretsNothing": "Nothing to copy: every selected secret is already in that file.",
+  "@copySecretsNothing": {
+    "description": "Shown when copying secrets would not change the target file."
+  },
+  "copySecretsUseCopied": "Copied",
+  "@copySecretsUseCopied": {
+    "description": "Short choice to replace the secret with the copied version, shown above its update date."
+  },
+  "copySecretsUseAllCopied": "Use all copied",
+  "@copySecretsUseAllCopied": {
+    "description": "Button that takes the copied version of every conflicting secret."
+  },
+  "copySecretsConfirm": "Copy",
+  "@copySecretsConfirm": {
+    "description": "Button that saves the copied secrets into the target file."
+  },
+  "secretsCopied": "{count, plural, =0{Copy done, \"{file}\" did not change} =1{Copied 1 secret to \"{file}\"} other{Copied {count} secrets to \"{file}\"}}",
+  "@secretsCopied": {
+    "description": "Shown after secrets were copied to another vault file.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      },
+      "file": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "unlockFileTitle": "Unlock \"{file}\"",
+  "@unlockFileTitle": {
+    "description": "Title of the dialog that unlocks a vault file, e.g. to copy secrets into it.",
+    "placeholders": {
+      "file": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
   },
   "selectedCount": "{count} selected",
   "@selectedCount": {

@@ -370,7 +370,7 @@ void main() {
       bool plain = false,
       String? newPassword,
     }) async {
-      await tester.tap(find.text('Export'));
+      await tester.tap(find.byTooltip('Export'));
       await tester.pumpAndSettle();
       if (plain) {
         await tester.tap(find.text('Plain JSON'));
@@ -398,12 +398,12 @@ void main() {
     ) async {
       await pumpPane(tester, secrets: _secrets);
       await unlockWith(tester, 'hunter22');
-      expect(find.text('Export'), findsNothing);
+      expect(find.byTooltip('Export'), findsNothing);
 
       await selectByLongPress(tester, 'Safe');
 
       expect(find.text('1 selected'), findsOneWidget);
-      expect(find.text('Export'), findsOneWidget);
+      expect(find.byTooltip('Export'), findsOneWidget);
       expect(find.byTooltip('Lock'), findsNothing);
       expect(find.text('New secret'), findsNothing);
       expect(container.read(currentLocationProvider).secretId, isNull);
@@ -422,7 +422,7 @@ void main() {
 
       await tester.tap(find.byTooltip('Clear selection'));
       await tester.pumpAndSettle();
-      expect(find.text('Export'), findsNothing);
+      expect(find.byTooltip('Export'), findsNothing);
       expect(find.byTooltip('Lock'), findsOneWidget);
     });
 
@@ -482,7 +482,7 @@ void main() {
       await pumpPane(tester, secrets: _secrets);
       await unlockWith(tester, 'hunter22');
       await selectByLongPress(tester, 'Safe');
-      await tester.tap(find.text('Export'));
+      await tester.tap(find.byTooltip('Export'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Plain JSON'));
       await tester.pumpAndSettle();

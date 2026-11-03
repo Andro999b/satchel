@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import '../files/vault_file.dart';
 import '../files/vault_files_providers.dart';
 import '../storage/storage_providers.dart';
 import 'vault_providers.dart';
@@ -259,6 +260,104 @@ class UnlockedVaults extends _$UnlockedVaults {
     return path;
   }
 
+  /// Copies the vault file [file] to the storage [storageId] under the same
+  /// name and returns the copy.
+  ///
+  /// The encrypted bytes are copied as they are, so the copy keeps the
+  /// password, `fileId` and secret ids, and works whether [file] is locked
+  /// or not. The copy is read back and compared before this returns; a new
+  /// copy that doesn't verify is removed.
+  ///
+  /// If a file with that name (ignoring case) exists in [storageId], this
+  /// throws [VaultFileExistsException] with it as `existing`, unless it is
+  /// [replacing]: then that file is overwritten if it is still at
+  /// [replacing]'s revision, and locked. Throws [StorageConflictException] if
+  /// [file] is no longer at its revision, or the target changed meanwhile.
+  Future<VaultFile> copyFile(
+    VaultFile file,
+    String storageId, {
+    VaultFile? replacing,
+  }) {
+    if (storageId == file.storageId) {
+      throw ArgumentError.value(storageId, 'storageId', 'Same storage');
+    }
+    final path = replacing?.path ?? file.path;
+    return _serialized(
+      VaultRef(storageId, path),
+      () => _copyFile(file, storageId, path, replacing),
+    );
+  }
+
+  Future<VaultFile> _copyFile(
+    VaultFile file,
+    String storageId,
+    String path,
+    VaultFile? replacing,
+  ) async {
+    final source = await _storage(file.storageId);
+    final blob = await source.read(file.path);
+    if (blob.entry.revision != file.revision) {
+      if (ref.mounted) ref.invalidate(vaultFilesProvider(file.storageId));
+      throw StorageConflictException(
+        file.path,
+        expectedRevision: file.revision,
+        actualRevision: blob.entry.revision,
+      );
+    }
+
+    final target = await _storage(storageId);
+    final name = file.name.toLowerCase();
+    final clash = (await target.list())
+        .where(
+          (entry) =>
+              isVaultFileName(entry.path) &&
+              vaultNameFromPath(entry.path).toLowerCase() == name,
+        )
+        .firstOrNull;
+    if (clash != null && clash.path != replacing?.path) {
+      throw VaultFileExistsException(
+        file.name,
+        existing: VaultFile(
+          storageId: storageId,
+          path: clash.path,
+          revision: clash.revision,
+        ),
+      );
+    }
+
+    try {
+      final entry = await target.write(
+        path,
+        blob.bytes,
+        expectedRevision: replacing?.revision,
+      );
+      // The session of a replaced file no longer matches the storage.
+      if (replacing != null && ref.mounted) lock(VaultRef(storageId, path));
+      try {
+        final written = await target.read(path);
+        if (!listEquals(written.bytes, blob.bytes)) {
+          throw CopyVerificationException(path);
+        }
+      } catch (_) {
+        if (replacing == null) {
+          try {
+            await target.delete(path, expectedRevision: entry.revision);
+          } on Exception catch (e) {
+            debugPrint('Could not remove the unverified copy $path: $e');
+          }
+        }
+        rethrow;
+      }
+      return VaultFile(
+        storageId: storageId,
+        path: path,
+        revision: entry.revision,
+      );
+    } finally {
+      if (ref.mounted) ref.invalidate(vaultFilesProvider(storageId));
+    }
+  }
+
   /// Re-encrypts the vault [vault] under [newPassword], with a new salt,
   /// after checking [currentPassword] against the stored file.
   ///
@@ -418,6 +517,11 @@ class UnlockedVaults extends _$UnlockedVaults {
     if (payload == null) throw StateError('Vault is locked');
     return planMerge(source: incoming, destination: payload);
   }
+
+  /// What copying the secrets [secretIds] of the unlocked vault [source]
+  /// into the unlocked vault [target] would do. Apply it with [applyImport].
+  MergePlan planCopy(VaultRef source, VaultRef target, Set<String> secretIds) =>
+      planImport(target, _exportPayload(source, secretIds));
 
   /// Applies [plan] with the user's [resolutions] to the unlocked vault
   /// [vault] and saves it. See [save].

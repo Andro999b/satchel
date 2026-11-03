@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel/src/export/export_providers.dart';
 import 'package:satchel/src/files/change_vault_password.dart';
+import 'package:satchel/src/files/copy_vault_file.dart';
 import 'package:satchel/src/files/delete_vault_file.dart';
 import 'package:satchel/src/files/files_pane.dart';
 import 'package:satchel/src/files/rename_vault_file.dart';
@@ -21,12 +22,14 @@ import '../test_app.dart';
 
 void main() {
   late FakeStorageProvider storage;
+  late FakeStorageProvider backup;
   late FakeFileExporter exporter;
   late ProviderContainer container;
   const vault = VaultRef('s', 'personal.satchel');
 
   Future<void> pumpFiles(WidgetTester tester) async {
     storage = FakeStorageProvider(id: 's');
+    backup = FakeStorageProvider(id: 'b');
     exporter = FakeFileExporter();
     await tester.runAsync(() async {
       await putVault(storage, vault.path, 'hunter22');
@@ -38,9 +41,10 @@ void main() {
           platform: StoragePlatform.linux,
           store: MemoryStorageConfigStore([
             directoryConfig('s', '/s', name: 'Sync folder'),
+            directoryConfig('b', '/b', name: 'Backup'),
           ]),
         ),
-        storageProvidersProvider.overrideWith((ref) async => [storage]),
+        storageProvidersProvider.overrideWith((ref) async => [storage, backup]),
         vaultCryptoProvider.overrideWithValue(const VaultCrypto(memoryKiB: 64)),
         fileExporterProvider.overrideWithValue(exporter),
       ],
@@ -278,6 +282,72 @@ void main() {
 
       expect(find.text('Use at least 8 characters'), findsOneWidget);
       expect(storage.blobs[vault.path]!.revision, before);
+    });
+  });
+
+  group('copy', () {
+    Future<void> copyTo(WidgetTester tester, String storage) async {
+      await choose(tester, 'Copy to…');
+      expect(find.text('Copy "personal" to'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(CopyVaultFileDialog),
+          matching: find.text('Sync folder'),
+        ),
+        findsNothing,
+      );
+      await tester.tap(find.text(storage));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('copies a locked file to another storage', (tester) async {
+      await pumpFiles(tester);
+
+      await copyTo(tester, 'Backup');
+
+      expect(find.byType(CopyVaultFileDialog), findsNothing);
+      expect(backup.paths, [vault.path]);
+      expect(backup.blobs[vault.path]!.bytes, storage.blobs[vault.path]!.bytes);
+      expect(find.text('Copied "personal" to "Backup"'), findsOneWidget);
+    });
+
+    testWidgets('asks before replacing a file with the same name', (
+      tester,
+    ) async {
+      await pumpFiles(tester);
+      await tester.runAsync(() => putVault(backup, vault.path, 'other'));
+      final before = backup.blobs[vault.path]!;
+
+      await copyTo(tester, 'Backup');
+
+      expect(find.text('Replace "personal"?'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(backup.blobs[vault.path], same(before));
+      expect(find.byType(SnackBar), findsNothing);
+
+      await copyTo(tester, 'Backup');
+      await tester.tap(find.text('Replace'));
+      await tester.pumpAndSettle();
+
+      expect(backup.blobs[vault.path]!.bytes, storage.blobs[vault.path]!.bytes);
+      expect(find.text('Copied "personal" to "Backup"'), findsOneWidget);
+    });
+
+    testWidgets('reports storage failures', (tester) async {
+      await pumpFiles(tester);
+      backup.writeError = const StorageBackendException('', 'read-only');
+
+      await copyTo(tester, 'Backup');
+
+      expect(backup.paths, isEmpty);
+      expect(
+        find.text(
+          'Could not copy "personal" to "Backup". Check the storages and try '
+          'again.',
+        ),
+        findsOneWidget,
+      );
     });
   });
 

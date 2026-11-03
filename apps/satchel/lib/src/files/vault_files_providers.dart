@@ -23,12 +23,25 @@ final class UnknownStorageException implements Exception {
 
 /// A vault file with this name (ignoring case) already exists.
 final class VaultFileExistsException implements Exception {
-  const VaultFileExistsException(this.name);
+  const VaultFileExistsException(this.name, {this.existing});
 
   final String name;
 
+  /// The file in the way, when known (e.g. the target of a copy).
+  final VaultFile? existing;
+
   @override
   String toString() => 'VaultFileExistsException: $name';
+}
+
+/// A copied file did not read back with the bytes that were written.
+final class CopyVerificationException implements Exception {
+  const CopyVerificationException(this.path);
+
+  final String path;
+
+  @override
+  String toString() => 'CopyVerificationException: $path';
 }
 
 /// Storage reads are not retried automatically: failures such as a revoked

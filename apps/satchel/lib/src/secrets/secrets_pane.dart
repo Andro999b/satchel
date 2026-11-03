@@ -9,6 +9,7 @@ import '../navigation/app_location.dart';
 import '../vault/unlocked_vaults.dart';
 import '../vault/vault_providers.dart';
 import '../widgets/message_view.dart';
+import 'copy_secrets.dart';
 import 'delete_secret.dart';
 import 'expiry_display.dart';
 import 'secret_display.dart';
@@ -64,6 +65,11 @@ class _SecretsPaneState extends ConsumerState<SecretsPane> {
     if (exported && mounted) setState(_selected.clear);
   }
 
+  Future<void> _copy(Set<String> ids) async {
+    final copied = await copySecrets(context, ref, _vaultRef, ids);
+    if (copied && mounted) setState(_selected.clear);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -100,13 +106,15 @@ class _SecretsPaneState extends ConsumerState<SecretsPane> {
                       ? null
                       : () => setState(() => _selected.addAll(ids)),
                 ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: FilledButton.tonalIcon(
-                    onPressed: () => _export(selected),
-                    icon: const Icon(Icons.file_download_outlined),
-                    label: Text(l10n.exportSelected),
-                  ),
+                IconButton(
+                  tooltip: l10n.copySecrets,
+                  icon: const Icon(Icons.content_copy),
+                  onPressed: () => _copy(selected),
+                ),
+                IconButton(
+                  tooltip: l10n.exportSelected,
+                  icon: const Icon(Icons.file_download_outlined),
+                  onPressed: () => _export(selected),
                 ),
               ],
             )

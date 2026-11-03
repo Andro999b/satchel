@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:satchel/src/files/vault_file.dart';
 import 'package:satchel/src/files/vault_files_providers.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
@@ -17,6 +18,7 @@ final _now = DateTime.utc(2026, 11, 2, 12);
 
 void main() {
   late FakeStorageProvider storage;
+  late FakeStorageProvider other;
   late MemoryStorageConfigStore store;
   late ProviderContainer container;
   const a = VaultRef('s', 'a.satchel');
@@ -36,11 +38,15 @@ void main() {
     storage = FakeStorageProvider(id: 's');
     await putVault(storage, a.path, 'password-a', secrets: [secret]);
     await putVault(storage, b.path, 'password-b');
-    store = MemoryStorageConfigStore([directoryConfig('s', '/s')]);
+    other = FakeStorageProvider(id: 't');
+    store = MemoryStorageConfigStore([
+      directoryConfig('s', '/s'),
+      directoryConfig('t', '/t'),
+    ]);
     container = ProviderContainer(
       overrides: [
         ...storageOverrides(platform: StoragePlatform.linux, store: store),
-        storageProvidersProvider.overrideWith((ref) async => [storage]),
+        storageProvidersProvider.overrideWith((ref) async => [storage, other]),
         appClockProvider.overrideWithValue(Clock.fixed(_now)),
         vaultCryptoProvider.overrideWithValue(const VaultCrypto(memoryKiB: 64)),
       ],
@@ -534,6 +540,110 @@ void main() {
       );
       expect(vaults()[a]!.key, same(key));
       expect(key.isDestroyed, isFalse);
+    });
+  });
+
+  group('copyFile', () {
+    VaultFile listed(FakeStorageProvider from, String path) => VaultFile(
+      storageId: from.id,
+      path: path,
+      revision: from.blobs[path]!.revision,
+    );
+
+    test('copies the encrypted bytes to another storage', () async {
+      final copy = await notifier().copyFile(listed(storage, a.path), 't');
+
+      expect(copy.storageId, 't');
+      expect(copy.path, a.path);
+      expect(copy.revision, other.blobs[a.path]!.revision);
+      expect(other.blobs[a.path]!.bytes, storage.blobs[a.path]!.bytes);
+      await notifier().unlock(const VaultRef('t', 'a.satchel'), 'password-a');
+      expect(vaults()[const VaultRef('t', 'a.satchel')]!.payload.secrets, [
+        secret,
+      ]);
+    });
+
+    test('refuses to copy within the same storage', () {
+      expect(
+        () => notifier().copyFile(listed(storage, a.path), 's'),
+        throwsArgumentError,
+      );
+    });
+
+    test('reports a file with the same name, ignoring case', () async {
+      await putVault(other, 'A.satchel', 'other');
+      final before = other.blobs['A.satchel']!;
+
+      await expectLater(
+        notifier().copyFile(listed(storage, a.path), 't'),
+        throwsA(
+          isA<VaultFileExistsException>().having(
+            (e) => e.existing,
+            'existing',
+            VaultFile(
+              storageId: 't',
+              path: 'A.satchel',
+              revision: before.revision,
+            ),
+          ),
+        ),
+      );
+      expect(other.paths, ['A.satchel']);
+      expect(other.blobs['A.satchel'], same(before));
+    });
+
+    test('replaces the confirmed file and locks it', () async {
+      await putVault(other, 'A.satchel', 'other');
+      const replaced = VaultRef('t', 'A.satchel');
+      await notifier().unlock(replaced, 'other');
+      final key = vaults()[replaced]!.key;
+
+      final copy = await notifier().copyFile(
+        listed(storage, a.path),
+        't',
+        replacing: listed(other, 'A.satchel'),
+      );
+
+      expect(copy.path, 'A.satchel');
+      expect(other.paths, ['A.satchel']);
+      expect(other.blobs['A.satchel']!.bytes, storage.blobs[a.path]!.bytes);
+      expect(vaults().containsKey(replaced), isFalse);
+      expect(key.isDestroyed, isTrue);
+    });
+
+    test('does not replace a file that changed since it was listed', () async {
+      await putVault(other, 'a.satchel', 'other');
+      final stale = listed(other, 'a.satchel');
+      final current = other.blobs['a.satchel']!;
+      other.blobs['a.satchel'] = (bytes: current.bytes, revision: 'newer');
+
+      await expectLater(
+        notifier().copyFile(listed(storage, a.path), 't', replacing: stale),
+        throwsA(isA<StorageConflictException>()),
+      );
+      expect(other.blobs['a.satchel']!.bytes, current.bytes);
+    });
+
+    test('does not copy a source that changed since it was listed', () async {
+      final stale = listed(storage, a.path);
+      final current = storage.blobs[a.path]!;
+      storage.blobs[a.path] = (bytes: current.bytes, revision: 'newer');
+
+      await expectLater(
+        notifier().copyFile(stale, 't'),
+        throwsA(isA<StorageConflictException>()),
+      );
+      expect(other.paths, isEmpty);
+    });
+
+    test('removes a copy that does not verify', () async {
+      other.corruptWrites = true;
+
+      await expectLater(
+        notifier().copyFile(listed(storage, a.path), 't'),
+        throwsA(isA<CopyVerificationException>()),
+      );
+      expect(other.paths, isEmpty);
     });
   });
 }

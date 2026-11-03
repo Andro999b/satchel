@@ -227,6 +227,9 @@ class _ImportPasswordDialogState extends ConsumerState<ImportPasswordDialog> {
 
 enum _SaveError { conflict, failed }
 
+/// Where the incoming secrets of a merge review come from.
+enum MergeReviewKind { import, copy }
+
 /// Shows what importing would add, skip and replace, lets the user choose
 /// the version of each conflicting secret, and saves on confirmation. Pops
 /// the number of secrets added or replaced.
@@ -236,11 +239,15 @@ class ImportReviewDialog extends ConsumerStatefulWidget {
     required this.vault,
     required this.fileName,
     required this.plan,
+    this.kind = MergeReviewKind.import,
   });
 
   final VaultRef vault;
+
+  /// The imported file, or for a copy the file copied into.
   final String fileName;
   final MergePlan plan;
+  final MergeReviewKind kind;
 
   @override
   ConsumerState<ImportReviewDialog> createState() => _ImportReviewDialogState();
@@ -298,10 +305,15 @@ class _ImportReviewDialogState extends ConsumerState<ImportReviewDialog> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final plan = widget.plan;
+    final copy = widget.kind == MergeReviewKind.copy;
     return PopScope(
       canPop: !_busy,
       child: AlertDialog(
-        title: Text(l10n.importTitle(widget.fileName)),
+        title: Text(
+          copy
+              ? l10n.copySecretsReviewTitle(widget.fileName)
+              : l10n.importTitle(widget.fileName),
+        ),
         content: SizedBox(
           width: 480,
           child: SingleChildScrollView(
@@ -310,7 +322,7 @@ class _ImportReviewDialogState extends ConsumerState<ImportReviewDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (plan.isEmpty)
-                  Text(l10n.importNothing)
+                  Text(copy ? l10n.copySecretsNothing : l10n.importNothing)
                 else ...[
                   Text(l10n.importNew(plan.added.length)),
                   if (plan.identical.isNotEmpty)
@@ -339,7 +351,11 @@ class _ImportReviewDialogState extends ConsumerState<ImportReviewDialog> {
                               ? null
                               : () =>
                                     _resolveAll(ConflictResolution.useIncoming),
-                          child: Text(l10n.importUseAllImported),
+                          child: Text(
+                            copy
+                                ? l10n.copySecretsUseAllCopied
+                                : l10n.importUseAllImported,
+                          ),
                         ),
                       ],
                     ),
@@ -347,6 +363,9 @@ class _ImportReviewDialogState extends ConsumerState<ImportReviewDialog> {
                     _ConflictTile(
                       key: ValueKey(conflict.id),
                       conflict: conflict,
+                      incomingLabel: copy
+                          ? l10n.copySecretsUseCopied
+                          : l10n.importUseImported,
                       resolution: _resolutions[conflict.id]!,
                       onChanged: _busy
                           ? null
@@ -378,7 +397,7 @@ class _ImportReviewDialogState extends ConsumerState<ImportReviewDialog> {
           if (!plan.isEmpty)
             FilledButton(
               onPressed: _busy ? null : _import,
-              child: Text(l10n.importConfirm),
+              child: Text(copy ? l10n.copySecretsConfirm : l10n.importConfirm),
             ),
         ],
       ),
@@ -391,11 +410,13 @@ class _ConflictTile extends StatelessWidget {
   const _ConflictTile({
     super.key,
     required this.conflict,
+    required this.incomingLabel,
     required this.resolution,
     required this.onChanged,
   });
 
   final SecretConflict conflict;
+  final String incomingLabel;
   final ConflictResolution resolution;
   final ValueChanged<ConflictResolution>? onChanged;
 
@@ -460,7 +481,7 @@ class _ConflictTile extends StatelessWidget {
         ),
         segment(
           ConflictResolution.useIncoming,
-          l10n.importUseImported,
+          incomingLabel,
           conflict.incoming,
           newer: conflict.incomingIsNewer,
         ),

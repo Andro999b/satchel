@@ -9,6 +9,7 @@ import '../import/import_secrets.dart';
 import '../navigation/app_location.dart';
 import '../widgets/message_view.dart';
 import 'change_vault_password.dart';
+import 'copy_vault_file.dart';
 import 'delete_vault_file.dart';
 import 'new_vault_file_dialog.dart';
 import 'rename_vault_file.dart';
@@ -207,6 +208,11 @@ class _VaultFileTile extends ConsumerWidget {
             leadingIcon: const Icon(Icons.password),
             onPressed: () => changeVaultPassword(context, current),
             child: Text(l10n.changePassword),
+          ),
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.file_copy_outlined),
+            onPressed: () => copyVaultFile(context, ref, current),
+            child: Text(l10n.copyFile),
           ),
           MenuItemButton(
             leadingIcon: const Icon(Icons.file_upload_outlined),
