@@ -712,6 +712,44 @@
   "@copySecrets": {
     "description": "Tooltip of the button that copies the selected secrets to another vault file."
   },
+  "copySecret": "Copy to…",
+  "@copySecret": {
+    "description": "Menu item that copies one secret to another vault file."
+  },
+  "duplicateSecret": "Duplicate",
+  "@duplicateSecret": {
+    "description": "Menu item that adds a copy of a secret to the same vault file."
+  },
+  "duplicateSecretTitle": "{title} (copy)",
+  "@duplicateSecretTitle": {
+    "description": "Title given to a duplicated secret.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank"
+      }
+    }
+  },
+  "duplicatingSecret": "Duplicating \"{title}\"…",
+  "@duplicatingSecret": {
+    "description": "Shown with a progress indicator while a secret is duplicated.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank"
+      }
+    }
+  },
+  "secretDuplicated": "Duplicated \"{title}\"",
+  "@secretDuplicated": {
+    "description": "Shown after a secret was duplicated in its vault file.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank"
+      }
+    }
+  },
   "copySecretsTitle": "{count, plural, =1{Copy 1 secret to} other{Copy {count} secrets to}}",
   "@copySecretsTitle": {
     "description": "Title of the dialog that picks the vault file to copy secrets to.",

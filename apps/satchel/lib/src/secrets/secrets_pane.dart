@@ -11,6 +11,7 @@ import '../vault/vault_providers.dart';
 import '../widgets/message_view.dart';
 import 'copy_secrets.dart';
 import 'delete_secret.dart';
+import 'duplicate_secret.dart';
 import 'expiry_display.dart';
 import 'secret_display.dart';
 import 'secret_editor.dart';
@@ -293,6 +294,18 @@ class _SecretTile extends ConsumerWidget {
                       initial: secret,
                     ),
                     child: Text(l10n.editSecret),
+                  ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.control_point_duplicate),
+                    onPressed: () =>
+                        duplicateSecret(context, ref, vault, secret),
+                    child: Text(l10n.duplicateSecret),
+                  ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.content_copy),
+                    onPressed: () =>
+                        copySecrets(context, ref, vault, {secret.id}),
+                    child: Text(l10n.copySecret),
                   ),
                   MenuItemButton(
                     leadingIcon: const Icon(Icons.delete_outline),

@@ -1,6 +1,6 @@
 name: satchel
 description: Satchel - serverless password and secrets keeper.
-version: 0.2.2+1
+version: 0.2.3+1
 publish_to: none
 resolution: workspace
 

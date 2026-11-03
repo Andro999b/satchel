@@ -357,6 +357,50 @@ void main() {
       );
       expect(find.text('Deleted "Safe"'), findsOneWidget);
     });
+
+    testWidgets('duplicate adds a copy with a new id and opens it', (
+      tester,
+    ) async {
+      await pumpPane(tester, secrets: _secrets);
+      await unlockWith(tester, 'hunter22');
+
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(ListTile, 'Safe'),
+          matching: find.byTooltip('More actions'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(MenuItemButton, 'Duplicate'));
+      await tester.pump();
+      await tester.pump();
+
+      final progress = find.text('Duplicating "Safe"…');
+      expect(progress, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(LinearProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      await settleCrypto(tester, progress);
+
+      expect(find.byType(AlertDialog), findsNothing);
+
+      final secrets = container
+          .read(unlockedVaultsProvider)[vault]!
+          .payload
+          .secrets;
+      expect(secrets, hasLength(3));
+      final copy = secrets.last as NoteSecret;
+      expect(copy.id, isNot(anyOf('l1', 'n1')));
+      expect(copy.title, 'Safe (copy)');
+      expect(copy.text, '12-34-56');
+      expect(container.read(currentLocationProvider).secretId, copy.id);
+      expect(find.text('Safe (copy)'), findsOneWidget);
+      expect(find.text('Duplicated "Safe"'), findsOneWidget);
+    });
   });
 
   group('select and export', () {

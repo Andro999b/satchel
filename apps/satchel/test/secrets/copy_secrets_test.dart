@@ -118,6 +118,30 @@ void main() {
   List<Secret>? secretsOf(VaultRef vault) =>
       container.read(unlockedVaultsProvider)[vault]?.payload.secrets;
 
+  testWidgets('the row menu copies one secret', (tester) async {
+    await pumpPane(tester);
+
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(ListTile, 'Example Bank'),
+        matching: find.byTooltip('More actions'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(MenuItemButton, 'Copy to…'));
+    await tester.pumpAndSettle();
+    expect(find.text('Copy 1 secret to'), findsOneWidget);
+    await tester.tap(find.text('Backup'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('other'));
+    await tester.pumpAndSettle();
+    await unlockTarget(tester, 'other-pass');
+    await confirmCopy(tester);
+
+    expect(secretsOf(other), [_login]);
+    expect(find.text('Copied 1 secret to "other"'), findsOneWidget);
+  });
+
   testWidgets('lists the files of a storage except the source', (tester) async {
     await pumpPane(tester);
     await tester.longPress(find.text('Safe'));
