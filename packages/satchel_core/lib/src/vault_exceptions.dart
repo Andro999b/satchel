@@ -22,18 +22,8 @@ final class UnsupportedVaultVersionException extends VaultException {
   final int version;
 }
 
-/// The file needs extra key-derivation inputs (e.g. a key file) that were
-/// not provided.
-final class MissingKdfInputException extends VaultException {
-  MissingKdfInputException(this.missing)
-    : super('Missing key derivation inputs: ${missing.join(', ')}');
-
-  /// Ids of the missing inputs.
-  final List<String> missing;
-}
-
-/// Decryption failed: wrong password or extra inputs, or the file was
-/// modified. AES-GCM can't tell these apart.
+/// Decryption failed: wrong password, or the file was modified. AES-GCM
+/// can't tell these apart.
 final class VaultAuthenticationException extends VaultException {
   const VaultAuthenticationException()
     : super('Wrong password, or the file was modified');

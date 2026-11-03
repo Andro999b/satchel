@@ -206,7 +206,6 @@ class _CopySecretsDialogState extends ConsumerState<CopySecretsDialog> {
 /// Why unlocking failed, localized in `build`.
 enum _UnlockError {
   wrongPassword,
-  needsExtraInputs,
   newerVersion,
   invalidFile,
   readFailed,
@@ -254,8 +253,6 @@ class _UnlockVaultDialogState extends ConsumerState<UnlockVaultDialog> {
       return;
     } on VaultAuthenticationException {
       error = _UnlockError.wrongPassword;
-    } on MissingKdfInputException {
-      error = _UnlockError.needsExtraInputs;
     } on UnsupportedVaultVersionException {
       error = _UnlockError.newerVersion;
     } on VaultFormatException {
@@ -314,8 +311,6 @@ class _UnlockVaultDialogState extends ConsumerState<UnlockVaultDialog> {
                   errorText: switch (_error) {
                     null => null,
                     _UnlockError.wrongPassword => l10n.unlockWrongPassword,
-                    _UnlockError.needsExtraInputs =>
-                      l10n.unlockNeedsExtraInputs,
                     _UnlockError.newerVersion => l10n.unlockNewerVersion,
                     _UnlockError.invalidFile => l10n.unlockInvalidFile,
                     _UnlockError.readFailed => l10n.unlockReadError,

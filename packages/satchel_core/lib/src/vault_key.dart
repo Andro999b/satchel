@@ -8,20 +8,17 @@ import 'kdf.dart';
 /// Kept while a vault is unlocked so it can be re-saved (with a fresh nonce)
 /// without re-running the slow key derivation. Call [destroy] when locking.
 final class VaultKey {
-  VaultKey._(this.params, List<String> extraInputIds, this._bytes)
-    : extraInputIds = List.unmodifiable(extraInputIds.toList()..sort());
+  VaultKey._(this.params, this._bytes);
 
   /// Derives a key for a new vault, or a new password, with a fresh salt.
   static Future<VaultKey> create({
     required String password,
-    Map<String, List<int>> extraInputs = const {},
     int memoryKiB = KdfParams.defaultMemoryKiB,
     int iterations = KdfParams.defaultIterations,
     int parallelism = KdfParams.defaultParallelism,
     Random? random,
   }) => derive(
     password: password,
-    extraInputs: extraInputs,
     params: KdfParams.generate(
       memoryKiB: memoryKiB,
       iterations: iterations,
@@ -34,20 +31,15 @@ final class VaultKey {
   static Future<VaultKey> derive({
     required String password,
     required KdfParams params,
-    Map<String, List<int>> extraInputs = const {},
   }) async {
     final bytes = await KeyDerivation.deriveKey(
       password: password,
       params: params,
-      extraInputs: extraInputs,
     );
-    return VaultKey._(params, extraInputs.keys.toList(), bytes);
+    return VaultKey._(params, bytes);
   }
 
   final KdfParams params;
-
-  /// Ids of the extra inputs mixed into the key, sorted.
-  final List<String> extraInputIds;
 
   final Uint8List _bytes;
   bool _destroyed = false;

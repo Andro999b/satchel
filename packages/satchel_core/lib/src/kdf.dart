@@ -118,19 +118,18 @@ final class KdfParams {
       'KdfParams(argon2id, m=$memoryKiB KiB, t=$iterations, p=$parallelism)';
 }
 
-/// Derives vault keys from a password and optional extra inputs.
+/// Derives vault keys from a password.
 abstract final class KeyDerivation {
   static const keyLength = 32;
 
-  /// Runs Argon2id over [password] and [extraInputs] (keyed by input id).
+  /// Runs Argon2id over [password].
   ///
   /// The returned buffer holds key material: zero it after use.
   static Future<Uint8List> deriveKey({
     required String password,
     required KdfParams params,
-    Map<String, List<int>> extraInputs = const {},
   }) async {
-    final secret = kdfSecret(password, extraInputs);
+    final secret = kdfSecret(password);
     final secretKey = SecretKeyData(secret, overwriteWhenDestroyed: true);
     SecretKey? derived;
     try {
@@ -147,31 +146,20 @@ abstract final class KeyDerivation {
     }
   }
 
-  /// The Argon2id input: the UTF-8 password, then each extra input's id and
-  /// bytes in id order, every field prefixed with its 4-byte big-endian
-  /// length so no two different combinations produce the same bytes.
+  /// The Argon2id input: the UTF-8 password, prefixed with its 4-byte
+  /// big-endian length.
   ///
   /// Holds the password: zero it after use.
   @visibleForTesting
-  static Uint8List kdfSecret(
-    String password,
-    Map<String, List<int>> extraInputs,
-  ) {
+  static Uint8List kdfSecret(String password) {
     final builder = BytesBuilder();
-    final fields = <List<int>>[utf8.encode(password)];
-    for (final id in extraInputs.keys.toList()..sort()) {
-      fields
-        ..add(utf8.encode(id))
-        ..add(extraInputs[id]!);
-    }
-    for (final field in fields) {
-      builder
-        ..add((ByteData(4)..setUint32(0, field.length)).buffer.asUint8List())
-        ..add(field);
-    }
+    final pwBytes = utf8.encode(password);
+    builder
+      ..add((ByteData(4)..setUint32(0, pwBytes.length)).buffer.asUint8List())
+      ..add(pwBytes);
     final secret = builder.takeBytes();
     // The UTF-8 copy of the password is no longer needed.
-    (fields.first as Uint8List).fillRange(0, fields.first.length, 0);
+    pwBytes.fillRange(0, pwBytes.length, 0);
     return secret;
   }
 }

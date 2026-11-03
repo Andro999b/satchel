@@ -1336,10 +1336,6 @@
   "@unlockWrongPassword": {
     "description": "Unlock error. Decryption cannot tell a wrong password from a modified file."
   },
-  "unlockNeedsExtraInputs": "This file needs a key file, which this version of Satchel doesn't support",
-  "@unlockNeedsExtraInputs": {
-    "description": "Unlock error for files protected with extra key inputs."
-  },
   "unlockNewerVersion": "This file was created by a newer version of Satchel",
   "@unlockNewerVersion": {
     "description": "Unlock error for files of an unknown format version."

@@ -12,7 +12,6 @@ final class GoldenVault {
     required this.params,
     required this.nonce,
     required this.payload,
-    this.extraInputs = const {},
   });
 
   final String file;
@@ -20,7 +19,6 @@ final class GoldenVault {
   final KdfParams params;
   final List<int> nonce;
   final VaultPayload payload;
-  final Map<String, List<int>> extraInputs;
 
   SequenceRandom nonceRandom() => SequenceRandom(nonce);
 }
@@ -42,24 +40,6 @@ final v1Goldens = [
       fileId: '0b6f4a2e-6d3c-4f4e-9a51-2f0e8c1d7b42',
       name: 'Personal',
       createdAt: DateTime.utc(2026, 1, 2, 3, 4, 5, 678),
-      updatedAt: DateTime.utc(2026, 11, 2, 10, 0),
-    ),
-  ),
-  GoldenVault(
-    file: 'extra_input.satchel',
-    password: 'correct horse battery staple',
-    params: KdfParams(
-      memoryKiB: 1024,
-      iterations: 1,
-      parallelism: 2,
-      salt: List.generate(16, (i) => 0xf0 - i),
-    ),
-    nonce: List.generate(12, (i) => i * 7),
-    extraInputs: {'keyfile': List.generate(32, (i) => 255 - i)},
-    payload: VaultPayload(
-      fileId: 'c5a1e7d0-3b8f-4c2a-8e6d-1f9b0a4c3d21',
-      name: 'Work',
-      createdAt: DateTime.utc(2026, 11, 2, 10, 0),
       updatedAt: DateTime.utc(2026, 11, 2, 10, 0),
     ),
   ),

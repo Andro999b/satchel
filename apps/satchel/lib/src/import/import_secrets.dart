@@ -54,8 +54,6 @@ Future<void> importSecrets(
     report(l10n.importUnsupported);
   } on UnsupportedVaultVersionException {
     report(l10n.unlockNewerVersion);
-  } on MissingKdfInputException {
-    report(l10n.unlockNeedsExtraInputs);
   } on VaultException {
     report(l10n.importInvalid);
   } catch (_) {
@@ -99,7 +97,7 @@ class ImportPasswordDialog extends ConsumerStatefulWidget {
 }
 
 /// Why opening a vault file to import failed, localized in `build`.
-enum _OpenError { wrongPassword, needsExtraInputs, newerVersion, invalid }
+enum _OpenError { wrongPassword, newerVersion, invalid }
 
 class _ImportPasswordDialogState extends ConsumerState<ImportPasswordDialog> {
   final _password = TextEditingController();
@@ -136,8 +134,6 @@ class _ImportPasswordDialogState extends ConsumerState<ImportPasswordDialog> {
       return;
     } on VaultAuthenticationException {
       error = _OpenError.wrongPassword;
-    } on MissingKdfInputException {
-      error = _OpenError.needsExtraInputs;
     } on UnsupportedVaultVersionException {
       error = _OpenError.newerVersion;
     } catch (_) {
@@ -192,7 +188,6 @@ class _ImportPasswordDialogState extends ConsumerState<ImportPasswordDialog> {
                   errorText: switch (_error) {
                     null => null,
                     _OpenError.wrongPassword => l10n.unlockWrongPassword,
-                    _OpenError.needsExtraInputs => l10n.unlockNeedsExtraInputs,
                     _OpenError.newerVersion => l10n.unlockNewerVersion,
                     _OpenError.invalid => l10n.importInvalid,
                   },

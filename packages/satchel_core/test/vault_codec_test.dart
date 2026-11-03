@@ -9,10 +9,8 @@ import 'golden_inputs.dart';
 
 // Small parameters keep the tests fast; the defaults are covered in
 // kdf_test.dart.
-Future<VaultKey> _key(
-  String password, {
-  Map<String, List<int>> extra = const {},
-}) => VaultKey.create(password: password, extraInputs: extra, memoryKiB: 64);
+Future<VaultKey> _key(String password) =>
+    VaultKey.create(password: password, memoryKiB: 64);
 
 VaultPayload _payload() => VaultPayload(
   fileId: 'f1',
@@ -39,7 +37,6 @@ void main() {
         final opened = await VaultCodec.decrypt(
           bytes,
           password: golden.password,
-          extraInputs: golden.extraInputs,
         );
 
         expect(opened.payload.toJson(), golden.payload.toJson());
@@ -50,7 +47,6 @@ void main() {
         final key = await VaultKey.derive(
           password: golden.password,
           params: golden.params,
-          extraInputs: golden.extraInputs,
         );
 
         final encrypted = await VaultCodec.encrypt(
@@ -205,45 +201,6 @@ void main() {
     });
   });
 
-  group('extra KDF inputs', () {
-    final keyfile = List.generate(32, (i) => i);
-
-    test('are required to decrypt', () async {
-      final bytes = await VaultCodec.encrypt(
-        _payload(),
-        await _key('pw', extra: {'keyfile': keyfile}),
-      );
-
-      await expectLater(
-        VaultCodec.decrypt(bytes, password: 'pw'),
-        throwsA(
-          isA<MissingKdfInputException>().having((e) => e.missing, 'missing', [
-            'keyfile',
-          ]),
-        ),
-      );
-      await expectLater(
-        VaultCodec.decrypt(
-          bytes,
-          password: 'pw',
-          extraInputs: {
-            'keyfile': [...keyfile.reversed],
-          },
-        ),
-        throwsA(isA<VaultAuthenticationException>()),
-      );
-      final opened = await VaultCodec.decrypt(
-        bytes,
-        password: 'pw',
-        extraInputs: {
-          'keyfile': keyfile,
-          'unused': [1],
-        },
-      );
-      expect(opened.key.extraInputIds, ['keyfile']);
-    });
-  });
-
   group('VaultKey', () {
     test('destroy zeroes the key', () async {
       final key = await _key('pw');
@@ -260,7 +217,7 @@ void main() {
       final key = await _key('pw');
 
       expect(key.toString(), contains('redacted'));
-      expect(key.toString(), isNot(contains('${key.bytes.first},')));
+      expect(key.toString(), isNot(contains(key.bytes.join(', '))));
     });
   });
 }

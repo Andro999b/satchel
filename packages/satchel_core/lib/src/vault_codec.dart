@@ -53,7 +53,6 @@ abstract final class VaultCodec {
     final header = utf8.encode(
       jsonEncode({
         'kdf': key.params.toJson(),
-        'extraInputs': key.extraInputIds,
         'cipher': cipher,
         'nonce': base64.encode(nonce),
       }),
@@ -92,28 +91,18 @@ abstract final class VaultCodec {
     }
   }
 
-  /// Derives the key from [password] (and [extraInputs]) and decrypts
-  /// [bytes].
+  /// Derives the key from [password] and decrypts [bytes].
   ///
-  /// Throws [VaultFormatException], [UnsupportedVaultVersionException],
-  /// [MissingKdfInputException] or [VaultAuthenticationException].
+  /// Throws [VaultFormatException], [UnsupportedVaultVersionException], or
+  /// [VaultAuthenticationException].
   static Future<OpenedVault> decrypt(
     Uint8List bytes, {
     required String password,
-    Map<String, List<int>> extraInputs = const {},
   }) async {
     final parsed = _parse(bytes);
-    final missing = [
-      for (final id in parsed.extraInputIds)
-        if (!extraInputs.containsKey(id)) id,
-    ];
-    if (missing.isNotEmpty) throw MissingKdfInputException(missing);
     final key = await VaultKey.derive(
       password: password,
       params: parsed.params,
-      extraInputs: {
-        for (final id in parsed.extraInputIds) id: extraInputs[id]!,
-      },
     );
     try {
       return OpenedVault(payload: await _decryptWith(parsed, key), key: key);
@@ -130,8 +119,7 @@ abstract final class VaultCodec {
     VaultKey key,
   ) async {
     final parsed = _parse(bytes);
-    if (parsed.params != key.params ||
-        !_listEquals(parsed.extraInputIds, key.extraInputIds)) {
+    if (parsed.params != key.params) {
       throw const VaultAuthenticationException();
     }
     return _decryptWith(parsed, key);
@@ -191,7 +179,6 @@ abstract final class VaultCodec {
     }
     if (header case {
       'kdf': final Object kdf,
-      'extraInputs': final List<Object?> extraInputs,
       'cipher': cipher,
       'nonce': final String nonce,
     }) {
@@ -204,13 +191,9 @@ abstract final class VaultCodec {
       if (nonceBytes.length != nonceLength) {
         throw const VaultFormatException('Invalid nonce length');
       }
-      if (extraInputs.any((id) => id is! String)) {
-        throw const VaultFormatException('Malformed extra inputs');
-      }
       final tagStart = bytes.length - tagLength;
       return _ParsedVault(
         params: KdfParams.fromJson(kdf),
-        extraInputIds: extraInputs.cast<String>(),
         nonce: nonceBytes,
         aad: bytes.sublist(0, headerEnd),
         cipherText: bytes.sublist(headerEnd, tagStart),
@@ -224,7 +207,6 @@ abstract final class VaultCodec {
 final class _ParsedVault {
   const _ParsedVault({
     required this.params,
-    required this.extraInputIds,
     required this.nonce,
     required this.aad,
     required this.cipherText,
@@ -232,7 +214,6 @@ final class _ParsedVault {
   });
 
   final KdfParams params;
-  final List<String> extraInputIds;
   final Uint8List nonce;
   final Uint8List aad;
   final Uint8List cipherText;

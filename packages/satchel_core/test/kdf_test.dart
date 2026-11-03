@@ -13,29 +13,7 @@ String _hex(List<int> bytes) =>
 void main() {
   group('kdfSecret', () {
     test('length-prefixes the password', () {
-      expect(KeyDerivation.kdfSecret('pw', const {}), [0, 0, 0, 2, 0x70, 0x77]);
-    });
-
-    test('appends extra inputs as id and bytes, sorted by id', () {
-      final secret = KeyDerivation.kdfSecret('pw', {
-        'z': [9],
-        'a': [1, 2],
-      });
-
-      expect(secret, [
-        0, 0, 0, 2, 0x70, 0x77, //
-        0, 0, 0, 1, 0x61, 0, 0, 0, 2, 1, 2, //
-        0, 0, 0, 1, 0x7a, 0, 0, 0, 1, 9,
-      ]);
-    });
-
-    test('distinguishes inputs that concatenate to the same bytes', () {
-      final a = KeyDerivation.kdfSecret('ab', {
-        'k': [99],
-      });
-      final b = KeyDerivation.kdfSecret('a', {'k': utf8.encode('bc')});
-
-      expect(_hex(a), isNot(_hex(b)));
+      expect(KeyDerivation.kdfSecret('pw'), [0, 0, 0, 2, 0x70, 0x77]);
     });
   });
 
