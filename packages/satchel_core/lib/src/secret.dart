@@ -69,7 +69,7 @@ sealed class Secret {
   }
 
   /// Default warning period for [expiryStatus].
-  static const expiryWarning = Duration(days: 30);
+  static const expiryWarning = Duration(days: 14);
 
   final SecretInfo info;
 
