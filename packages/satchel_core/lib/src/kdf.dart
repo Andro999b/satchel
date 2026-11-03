@@ -43,7 +43,7 @@ final class KdfParams {
 
   // Bounds accepted when reading a file, so a crafted header can't make the
   // app allocate unbounded memory or spin forever.
-  static const maxMemoryKiB = 1024 * 1024;
+  static const maxMemoryKiB = 128 * 1024;
   static const maxIterations = 64;
   static const maxParallelism = 16;
 
