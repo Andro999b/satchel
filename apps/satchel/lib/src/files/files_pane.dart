@@ -194,60 +194,63 @@ class _VaultFileTile extends ConsumerWidget {
         ),
       ),
       title: Text(file.name),
-      trailing: MenuAnchor(
-        menuChildren: [
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.edit_outlined),
-            // The name is also stored inside the encrypted file.
-            onPressed: unlocked
-                ? () => renameVaultFile(context, ref, current)
-                : null,
-            child: Text(l10n.renameFile),
+      trailing: Focus(
+        parentNode: FocusScope.of(context),
+        child: MenuAnchor(
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.edit_outlined),
+              // The name is also stored inside the encrypted file.
+              onPressed: unlocked
+                  ? () => renameVaultFile(context, ref, current)
+                  : null,
+              child: Text(l10n.renameFile),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.password),
+              onPressed: () => changeVaultPassword(context, current),
+              child: Text(l10n.changePassword),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.file_copy_outlined),
+              onPressed: () => copyVaultFile(context, ref, current),
+              child: Text(l10n.copyFile),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.file_upload_outlined),
+              onPressed: unlocked
+                  ? () => importSecrets(
+                      context,
+                      ref,
+                      VaultRef(file.storageId, file.path),
+                    )
+                  : null,
+              child: Text(l10n.importFile),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.file_download_outlined),
+              onPressed: unlocked ? () => _exportAll(context, ref) : null,
+              child: Text(l10n.exportFile),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.delete_outline),
+              onPressed: storageName == null
+                  ? null
+                  : () => deleteVaultFile(
+                      context,
+                      ref,
+                      current,
+                      storageName: storageName,
+                    ),
+              child: Text(l10n.deleteFile),
+            ),
+          ],
+          builder: (context, controller, _) => IconButton(
+            tooltip: l10n.fileActionsTooltip,
+            icon: const Icon(Icons.more_vert),
+            onPressed: () =>
+                controller.isOpen ? controller.close() : controller.open(),
           ),
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.password),
-            onPressed: () => changeVaultPassword(context, current),
-            child: Text(l10n.changePassword),
-          ),
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.file_copy_outlined),
-            onPressed: () => copyVaultFile(context, ref, current),
-            child: Text(l10n.copyFile),
-          ),
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.file_upload_outlined),
-            onPressed: unlocked
-                ? () => importSecrets(
-                    context,
-                    ref,
-                    VaultRef(file.storageId, file.path),
-                  )
-                : null,
-            child: Text(l10n.importFile),
-          ),
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.file_download_outlined),
-            onPressed: unlocked ? () => _exportAll(context, ref) : null,
-            child: Text(l10n.exportFile),
-          ),
-          MenuItemButton(
-            leadingIcon: const Icon(Icons.delete_outline),
-            onPressed: storageName == null
-                ? null
-                : () => deleteVaultFile(
-                    context,
-                    ref,
-                    current,
-                    storageName: storageName,
-                  ),
-            child: Text(l10n.deleteFile),
-          ),
-        ],
-        builder: (context, controller, _) => IconButton(
-          tooltip: l10n.fileActionsTooltip,
-          icon: const Icon(Icons.more_vert),
-          onPressed: () =>
-              controller.isOpen ? controller.close() : controller.open(),
         ),
       ),
       onTap: () => ref

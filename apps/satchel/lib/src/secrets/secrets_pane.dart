@@ -276,30 +276,37 @@ class _SecretTile extends ConsumerWidget {
             ),
       trailing: selecting
           ? null
-          : MenuAnchor(
-              menuChildren: [
-                MenuItemButton(
-                  leadingIcon: const Icon(Icons.check_box_outlined),
-                  onPressed: onToggle,
-                  child: Text(l10n.selectForExport),
+          : Focus(
+              parentNode: FocusScope.of(context),
+              child: MenuAnchor(
+                menuChildren: [
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.check_box_outlined),
+                    onPressed: onToggle,
+                    child: Text(l10n.selectForExport),
+                  ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.edit_outlined),
+                    onPressed: () => showSecretEditor(
+                      context,
+                      vault: vault,
+                      initial: secret,
+                    ),
+                    child: Text(l10n.editSecret),
+                  ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.delete_outline),
+                    onPressed: () => deleteSecret(context, ref, vault, secret),
+                    child: Text(l10n.deleteSecret),
+                  ),
+                ],
+                builder: (context, controller, _) => IconButton(
+                  tooltip: l10n.secretActionsTooltip,
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () => controller.isOpen
+                      ? controller.close()
+                      : controller.open(),
                 ),
-                MenuItemButton(
-                  leadingIcon: const Icon(Icons.edit_outlined),
-                  onPressed: () =>
-                      showSecretEditor(context, vault: vault, initial: secret),
-                  child: Text(l10n.editSecret),
-                ),
-                MenuItemButton(
-                  leadingIcon: const Icon(Icons.delete_outline),
-                  onPressed: () => deleteSecret(context, ref, vault, secret),
-                  child: Text(l10n.deleteSecret),
-                ),
-              ],
-              builder: (context, controller, _) => IconButton(
-                tooltip: l10n.secretActionsTooltip,
-                icon: const Icon(Icons.more_vert),
-                onPressed: () =>
-                    controller.isOpen ? controller.close() : controller.open(),
               ),
             ),
       onTap: selecting
