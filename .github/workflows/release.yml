@@ -211,7 +211,7 @@ jobs:
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
 
   release:
-    needs: [build-android]
+    needs: [prepare, build-android]
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
