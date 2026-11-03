@@ -560,25 +560,30 @@ class _SecretEditorState extends ConsumerState<SecretEditor> {
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         labelText: l10n.passwordLabel,
-        suffixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: l10n.generatePassword,
-              icon: const Icon(Icons.casino_outlined),
-              onPressed: _busy
-                  ? null
-                  : () => _password.text = generatePassword(),
-            ),
-            IconButton(
-              tooltip: _obscurePassword ? l10n.showPassword : l10n.hidePassword,
-              icon: Icon(
-                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+        // Keep Tab moving between fields; the buttons stay clickable.
+        suffixIcon: ExcludeFocus(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: l10n.generatePassword,
+                icon: const Icon(Icons.casino_outlined),
+                onPressed: _busy
+                    ? null
+                    : () => _password.text = generatePassword(),
               ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-            ),
-          ],
+              IconButton(
+                tooltip: _obscurePassword
+                    ? l10n.showPassword
+                    : l10n.hidePassword,
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ],
+          ),
         ),
       ),
       // Passwords are kept exactly as entered, spaces included.

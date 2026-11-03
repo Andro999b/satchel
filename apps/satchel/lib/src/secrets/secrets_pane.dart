@@ -452,12 +452,15 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
                   labelText: l10n.passwordLabel,
                   errorText: error,
                   errorMaxLines: 3,
-                  suffixIcon: IconButton(
-                    tooltip: _obscure ? l10n.showPassword : l10n.hidePassword,
-                    icon: Icon(
-                      _obscure ? Icons.visibility : Icons.visibility_off,
+                  // Keep Tab moving to Unlock; the button stays clickable.
+                  suffixIcon: ExcludeFocus(
+                    child: IconButton(
+                      tooltip: _obscure ? l10n.showPassword : l10n.hidePassword,
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
                 onSubmitted: (_) => _unlock(),

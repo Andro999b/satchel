@@ -80,22 +80,25 @@ class _NewPasswordFieldsState extends State<NewPasswordFields> {
             labelText: widget.label,
             helperText: l10n.passwordHelper(NewPasswordFields.minLength),
             helperMaxLines: 2,
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: l10n.generatePassword,
-                  icon: const Icon(Icons.casino_outlined),
-                  onPressed: widget.enabled ? _generate : null,
-                ),
-                IconButton(
-                  tooltip: _obscure ? l10n.showPassword : l10n.hidePassword,
-                  icon: Icon(
-                    _obscure ? Icons.visibility : Icons.visibility_off,
+            // Keep Tab moving between fields; the buttons stay clickable.
+            suffixIcon: ExcludeFocus(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: l10n.generatePassword,
+                    icon: const Icon(Icons.casino_outlined),
+                    onPressed: widget.enabled ? _generate : null,
                   ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ],
+                  IconButton(
+                    tooltip: _obscure ? l10n.showPassword : l10n.hidePassword,
+                    icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                ],
+              ),
             ),
           ),
           validator: (value) =>
