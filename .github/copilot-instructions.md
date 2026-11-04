@@ -13,7 +13,7 @@ The Flutter SDK is managed with **fvm**. The pinned version lives in `.fvmrc` (c
 ```sh
 fvm install                              # install the SDK pinned in .fvmrc
 fvm flutter pub get                      # from repo root, resolves all workspace members
-(cd apps/satchel && fvm dart run build_runner build --delete-conflicting-outputs)   # required after pub get: *.g.dart is gitignored
+(cd apps/satchel && fvm dart run build_runner build)   # required after pub get: *.g.dart is gitignored
 (cd apps/satchel && fvm flutter gen-l10n)   # regenerate localizations after editing ARB files (pub get/run/test/build also do it)
 fvm dart format .                        # format everything
 fvm dart analyze --fatal-infos           # from root, all packages; CI fails on any lint
@@ -129,12 +129,12 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
   - Panes are `Scaffold`s nested in the shell's `Scaffold`, so snack bars appear once, at the shell level.
   - Lists under FABs end with bottom padding (`fabListPadding`/`twoFabListPadding` in `widgets/fab_padding.dart`), so the FABs never cover the last row's actions. `satchelTheme` uses 16 horizontal padding everywhere (`ListTileThemeData.contentPadding`, `AppBarTheme.titleSpacing` and `actionsPadding`), so titles line up with list tiles and app bar actions with their trailing buttons.
 - **Routing:** `go_router`, with URLs mirroring the hierarchy (`/s/:providerId/f/:fileId/:secretId`). URLs carry IDs only, never secret data. A locked file's pane is its unlock screen, and the location never shows a secret of a locked file. Unlocked state is never restored from the URL or browser history.
-- Several files can be unlocked at once (move/copy needs both ends unlocked). The files pane shows each file's lock state. "Lock all" and auto-lock lock every file and close any open detail view.
-- Screens: first run, add storage, storages & files, create file, unlock (password, PIN on Android), secret list, secret detail, secret editor, move/copy destination picker, merge review, import/export, settings.
+- Several files can be unlocked at once (copying secrets needs both ends unlocked). The files pane shows each file's lock state. "Lock all" and auto-lock lock every file and close any open detail view.
+- Screens: first run, add storage, storages & files, create file, unlock (password, PIN on Android), secret list, secret detail, secret editor, copy destination picker, merge review, import/export, settings.
 - Secret detail and editor views `switch` exhaustively on the sealed secret type:
   - Password: masked, reveal, copy, and a password generator in the editor (`generatePassword` in `satchel_core`: 20 characters by default from all four classes, at least one of each, without ambiguous `I l 1 O 0`, using `Random.secure()`).
   - Login: copyable username, masked password, URL that opens in the browser.
-  - PEM: monospace, collapsed, save as file, and masked when it contains a private key.
+  - PEM: monospace, collapsed, save as file (planned), and masked when it contains a private key.
   - Recovery codes: checklist of used/unused codes with an "N left" count and a low-count warning.
   - Note: multi-line, masked.
   - Every type shows tags, the expiry, and created/updated timestamps.
@@ -158,7 +158,7 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
 - Both files and secrets have **required** `createdAt` and `updatedAt`. They're stored in UTC as ISO-8601 strings and shown in local time.
 - File timestamps live **inside the encrypted payload**, not in the plaintext header. Never rely on provider or filesystem mtime for them.
 - `createdAt` is set once and never changes. `updatedAt` changes only when content changes. Editing a secret bumps both the secret's and its file's `updatedAt`. Adding, removing, or merging secrets bumps the file's `updatedAt`.
-- Move, copy, and import **preserve** a secret's original `createdAt`/`updatedAt`. They describe the secret, not where it's stored.
+- Copy and import **preserve** a secret's original `createdAt`/`updatedAt`. They describe the secret, not where it's stored.
 - Domain code gets the time from an injected `Clock`, never `DateTime.now()` directly, so tests can be deterministic.
 
 ### Vault file format (`satchel_core`)
@@ -183,7 +183,7 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
   - Desktop (`IoDirectoryBackend`, `dart:io`): write to a hidden temp file, flush, then rename over the target (atomic). The folder is picked with `file_selector`.
   - Android (`SafDirectoryBackend`, `saf_util` + `saf_stream`): the location is a Storage Access Framework tree URI picked with a persisted read/write permission. SAF has no atomic replace, so a write goes to a hidden temp file, then the old file is deleted and the temp one renamed. A crash in between leaves the new data in `.<name>.<random>.tmp`, never lost.
   - Tests: `test/directory/` (VM only) runs the contract against a real temp dir and against fake SAF platform interfaces. `saf_stream` pulls in `package:jni`, which is why web builds must never reach that code.
-- On web, local storage is the IndexedDB provider above. Export downloads files (`FileExporter`); upload is not yet implemented.
+- On web, local storage is the IndexedDB provider above. Export downloads files (`FileExporter`); upload is planned (see "Planned features").
 - Google Drive (kind `googleDrive`, every platform, user-added, several allowed; offered only when `googleAuthProvider` isn't `null`): `GoogleDriveStorageProvider` keeps each blob as `<name>.satchel` in one Drive folder, called directly from the client via Drive v3 REST (`GoogleDriveApi`, `package:http`) with the minimal scope `drive.file` and no server. Its `StorageConfig` has `location` = folder id (`driveRootFolderId` = "My Drive"), `locationName` = the readable path ("My Drive / Satchel", shown in the storage tile with the account email), and `accountId` = the linked `GoogleAccount.id`. `kind.create(config, googleAuth:, googleAccount:)` builds it; `storageProvidersProvider` passes the linked account (and rebuilds when accounts change).
   - With `drive.file` Satchel only sees files and folders it created itself, on any device (all clients of one Cloud project share them). Folders made elsewhere, and vault files uploaded by hand, are invisible. So the add flow (`storage/add_google_drive.dart`, `AddGoogleDriveDialog`) is: choose a linked account (or add one), browse the folders Satchel can see from "My Drive" (`DriveFolderSource` via `driveFolderSourceProvider`; up, open, "New folder", "Use this folder"; a folder is refused if already added for that account), then name the storage.
   - Revision = `<file id>:<MD5 of the content>`: computed from the bytes on `read`/`write`, from Drive's `md5Checksum` when listing. It changes with the content, and a recreated file has a new id. Never use Drive's `version`: it also rises on server-side changes that leave the content alone, which turned the next save into a false conflict. Drive v3 has no conditional writes (no ETag/`If-Match`), so `write`/`delete` check the current revision right before changing the file, and operations of the app on one folder are serialized. Other devices can still race in that window; the app's read-back verification catches a bad write. Several files sharing a name (e.g. two devices creating one at once): the oldest wins. `list` fails if the folder was deleted. `delete` moves the file to the Drive trash. All requests run through `_send`, which retries once with a fresh token after a 401.
@@ -199,7 +199,7 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
   - The account identity comes from the user info endpoint (or the plugin on Android). A re-sign-in must return the same account id, else `GoogleAccountMismatchException`.
   - Signing out forgets local credentials but never revokes the grant: revocation would also sign out Satchel's other devices for that account.
   - Tests: `test/google/` (VM only) runs the loopback flow against a real loopback server and `MockClient` Google endpoints.
-- Offline: remote providers keep a locally cached **encrypted** copy. Writes check the remote revision/etag. On a mismatch they go through the same merge flow as move/copy/import (see below) instead of silently overwriting.
+- Offline: remote providers keep a locally cached **encrypted** copy. Writes check the remote revision/etag. On a mismatch they go through the same merge flow as copy/import (see below) instead of silently overwriting.
 
 ### PIN unlock (optional, Android, `apps/satchel`)
 - A 6–8 digit PIN is low entropy and must never be the sole protection of a file. The PIN is per file, set from the unlocked file's menu in `SecretsPane` ("Set up PIN"/"Change PIN", plus "Remove PIN"; offered only when `pinStoreProvider` isn't `null`, i.e. on Android). Tiles of such files say "PIN unlock".
@@ -226,16 +226,15 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
 - Import works on an unlocked file only ("Import" in the `SecretsPane` file menu) and always goes through the merge flow below. `importSecrets` (`lib/src/import/import_secrets.dart`) picks a file through `fileImporterProvider` (`FileImporter`/`FileSelectorImporter` in `satchel_storage`, `file_selector` on every platform, unfiltered on Android, which can't map `.satchel` to a MIME type). `UnlockedVaults.readImport` detects the format by extension, ignoring case: `.json` is a plain export, and `.satchel` is a vault file. A vault file is first tried with the destination's session key (its own exports), else `ImportPasswordDialog` asks for its password. Other extensions throw `UnsupportedImportException`. The picked bytes are zeroed afterwards.
 - `ImportReviewDialog` shows the counts of new and identical secrets and lists each conflict with both versions (title and `updatedAt`, the newer one marked and pre-selected), with Keep all current/Use all imported. Nothing is written until Import (`UnlockedVaults.applyImport` → `save`). Cancelling changes nothing. Its `kind` (`MergeReviewKind.import`/`copy`) only switches the wording.
 
-### Move / copy between storages
-- Files and secrets can be moved or copied to any provider or file: a whole file (provider → provider), or individual secrets (file → file, within or across providers).
-- Copying or moving a **file** keeps its `fileId` and its secrets' `id`s. That way, copying it back later or importing its export is detected as the same data and merged rather than duplicated. A file copy (implemented: `UnlockedVaults.copyFile`) copies the encrypted bytes as they are, so it keeps the source's password and KDF settings.
-- Copying or moving a **secret** keeps its `id` and timestamps. The only exception is "duplicate in the same file", which gets a new `id` and new timestamps.
-- Copying selected secrets (implemented: `copySecrets` in `secrets/copy_secrets.dart`): `CopySecretsDialog` picks a storage, then one of its files (any file but the source, with its lock state). A locked target is unlocked first with `UnlockVaultDialog` and stays unlocked. `UnlockedVaults.planCopy` plans the merge of the selected secrets into the target, and `ImportReviewDialog(kind: MergeReviewKind.copy)` reviews and saves it exactly like an import.
+### Copy between storages
+- Files and secrets can be copied to any provider or file: a whole file (provider → provider), or individual secrets (file → file, within or across providers). There is deliberately no move: copy, then delete the source if wanted.
+- Copying a **file** keeps its `fileId` and its secrets' `id`s. That way, copying it back later or importing its export is detected as the same data and merged rather than duplicated. A file copy (`UnlockedVaults.copyFile`) copies the encrypted bytes as they are, so it keeps the source's password and KDF settings.
+- Copying a **secret** keeps its `id` and timestamps. The only exception is "duplicate in the same file", which gets a new `id` and new timestamps.
+- Copying selected secrets (`copySecrets` in `secrets/copy_secrets.dart`): `CopySecretsDialog` picks a storage, then one of its files (any file but the source, with its lock state). A locked target is unlocked first with `UnlockVaultDialog` and stays unlocked. `UnlockedVaults.planCopy` plans the merge of the selected secrets into the target, and `ImportReviewDialog(kind: MergeReviewKind.copy)` reviews and saves it exactly like an import.
 - Cross-file operations need **both files unlocked**. Secrets are decrypted with the source key and re-encrypted with the destination key in memory. Plaintext is never staged on disk.
-- **A move is copy → verify → delete.** Write the destination, re-read and decrypt it to verify, and only then remove from the source. If any step fails, the source stays intact. Partial failures leave data duplicated, never lost.
 
 ### Merge and conflict resolution
-- Import, move, copy, and sync conflicts all share **one merge pipeline**:
+- Import, copy, and sync conflicts all share **one merge pipeline**:
   1. `satchel_core` builds a `MergePlan` with a pure function: `planMerge(source, destination) → MergePlan`, with no I/O and no UI.
   2. The app shows the plan to the user.
   3. The user resolves each conflict and confirms.
@@ -250,12 +249,18 @@ apps/satchel                Flutter app: UI, state, PIN unlock, platform integra
 - The confirmation screen shows a side-by-side diff of the fields that changed, with secret values masked until the user reveals them, plus both timestamps.
 - Cancelling at any point leaves both source and destination unchanged.
 
+### Planned features (not implemented yet)
+- **Web upload:** a way to add an existing `.satchel` file to the browser storage (web), and reasonably to any storage ("Add existing file" in `FilesPane`). Pick it with `fileImporterProvider`, check that it parses as a vault file (`VaultCodec.readKdfParams`, no password needed) and that its name is valid (`checkVaultName`), then write the bytes as they are with `expectedRevision: null`. A name clash (ignoring case) asks before replacing, through `DestructiveDialog`, like Copy to…. The bytes stay encrypted, and the picked buffer is zeroed afterwards.
+- **Sorting and favorites:** the secrets list can be sorted by title, recently updated, or expiry (soonest first). The sort is a device-local, non-secret preference in shared preferences. Favorites are pinned to the top. They are a secret's data and live in the encrypted payload (an optional `favorite` field, omitted when false), so they sync. Check first that older readers accept the new field, and bump `formatVersion` with new goldens if they don't.
+- **PEM "Save as file":** the PEM view saves the PEM as `<title>.pem` through `fileExporterProvider`. This writes plaintext, so it is a second allowed exception next to the plain export (update the Conventions rule): it needs an explicit action, a warning that it is not encrypted (stronger when `containsPrivateKey`), and the bytes are zeroed after saving.
+- **"Lock all" action:** a `lock` button in the storages pane's app bar, shown only while some file is unlocked, that calls `UnlockedVaults.lockAll()` and reports how many files were locked in a snack bar.
+
 ## Conventions
 
 - **Crypto and format code lives only in `satchel_core`.** UI and storage code call its high-level API (`VaultCodec.encrypt/decrypt`, `KeyDerivation`) and never touch primitives directly.
 - **Any format change bumps `formatVersion`** and must keep decryption support for all previous versions. `satchel_core/test` holds committed golden vault files and known-answer test vectors per version (`test/golden/v1/*.satchel`, with their inputs in `test/golden_inputs.dart`; `secrets.satchel` holds one secret of every type from `test/secret_fixtures.dart`, which must never change). Encrypting the inputs must reproduce each file byte for byte. Never regenerate an existing golden; add new ones for each new version. The v1 goldens and the Argon2id KAT in `kdf_test.dart` were cross-checked with Python's `argon2-cffi` and `cryptography`.
 - Crypto tests must cover the negative cases: wrong password, tampered header, tampered ciphertext, and an unknown version.
-- `planMerge`/`applyMerge` tests cover every classification and resolution. Move tests cover failure at each step (write, verify, delete) and check that the source is never lost.
+- `planMerge`/`applyMerge` tests cover every classification and resolution.
 - Never log, `print`, `toString()`, or include in exceptions any secret value, password, PIN, or key. Secret models override `toString()` to redact.
 - Zero key and password `Uint8List` buffers after use (`fillRange(0, len, 0)`) wherever the API allows.
 - Plaintext never touches disk, cache, or shared prefs. Persist encrypted bytes only.

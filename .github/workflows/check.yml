@@ -22,7 +22,7 @@ jobs:
 
       - name: Generate code
         working-directory: apps/satchel
-        run: dart run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build
 
       - name: Format
         run: dart format --output=none --set-exit-if-changed .
