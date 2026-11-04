@@ -72,6 +72,33 @@ void main() {
     expect(await VaultCodec.decryptWithKey(bytes, key), isA<VaultPayload>());
   });
 
+  test('readKdfParams reads the header without a key', () async {
+    final key = await _key('pw');
+    final bytes = await VaultCodec.encrypt(_payload(), key);
+
+    expect(VaultCodec.readKdfParams(bytes), key.params);
+    expect(
+      () => VaultCodec.readKdfParams(Uint8List(4)),
+      throwsA(isA<VaultFormatException>()),
+    );
+  });
+
+  test('VaultKey.fromBytes opens a file with raw key bytes', () async {
+    final key = await _key('pw');
+    final bytes = await VaultCodec.encrypt(_payload(), key);
+    final raw = Uint8List.fromList(key.bytes);
+
+    final copy = VaultKey.fromBytes(key.params, raw);
+
+    expect((await VaultCodec.decryptWithKey(bytes, copy)).name, 'Personal');
+    copy.destroy();
+    expect(raw, everyElement(0));
+    expect(
+      () => VaultKey.fromBytes(key.params, Uint8List(16)),
+      throwsArgumentError,
+    );
+  });
+
   test('uses the default KDF parameters for new keys', () async {
     final key = await VaultKey.create(password: 'pw');
 

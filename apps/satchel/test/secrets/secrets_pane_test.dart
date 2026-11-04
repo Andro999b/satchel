@@ -470,6 +470,36 @@ void main() {
       expect(find.byTooltip('Lock'), findsOneWidget);
     });
 
+    testWidgets('the file menu exports every secret', (tester) async {
+      await pumpPane(tester, secrets: _secrets);
+      await unlockWith(tester, 'hunter22');
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byTooltip('More actions'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(MenuItemButton, 'Set up PIN'), findsNothing);
+      await tester.tap(find.widgetWithText(MenuItemButton, 'Export'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(FilledButton, 'Export'),
+        ),
+      );
+      await settleCrypto(tester, find.byType(ExportSecretsDialog));
+
+      final file = exporter.saved.single;
+      expect(file.name, 'personal.satchel');
+      final opened = await tester.runAsync(
+        () => VaultCodec.decrypt(file.bytes, password: 'hunter22'),
+      );
+      expect(opened!.payload.secrets.map((s) => s.id), ['l1', 'n1']);
+    });
+
     testWidgets('the row menu can start a selection', (tester) async {
       await pumpPane(tester, secrets: _secrets);
       await unlockWith(tester, 'hunter22');

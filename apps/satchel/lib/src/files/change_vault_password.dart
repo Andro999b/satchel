@@ -4,15 +4,22 @@ import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
 import '../l10n/l10n.dart';
+import '../pin/pin_unlock.dart';
 import '../vault/unlocked_vaults.dart';
 import 'vault_file.dart';
 import 'vault_file_fields.dart';
 
 /// Asks for the current and a new password of [file] and re-encrypts it.
-/// Reports success in a snack bar.
+/// Reports success in a snack bar, which says if the file's PIN was removed.
 Future<void> changeVaultPassword(BuildContext context, VaultFile file) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
+  final hadPin =
+      ProviderScope.containerOf(context, listen: false)
+          .read(pinUnlockProvider)
+          .value
+          ?.contains(VaultRef(file.storageId, file.path)) ??
+      false;
   final changed = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -20,7 +27,13 @@ Future<void> changeVaultPassword(BuildContext context, VaultFile file) async {
   );
   if (changed ?? false) {
     messenger.showSnackBar(
-      SnackBar(content: Text(l10n.passwordChanged(file.name))),
+      SnackBar(
+        content: Text(
+          hadPin
+              ? l10n.passwordChangedPinRemoved(file.name)
+              : l10n.passwordChanged(file.name),
+        ),
+      ),
     );
   }
 }

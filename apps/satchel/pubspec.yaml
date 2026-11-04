@@ -14,6 +14,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^3.4.3
+  flutter_secure_storage: ^11.2.0
   intl: any
   riverpod_annotation: ^4.0.7
   satchel_core:

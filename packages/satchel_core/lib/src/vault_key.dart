@@ -39,6 +39,15 @@ final class VaultKey {
     return VaultKey._(params, bytes);
   }
 
+  /// Wraps raw key [bytes] derived with [params], e.g. after unwrapping it
+  /// with a PIN. Takes ownership of [bytes]: [destroy] zeroes them.
+  factory VaultKey.fromBytes(KdfParams params, Uint8List bytes) {
+    if (bytes.length != KeyDerivation.keyLength) {
+      throw ArgumentError.value(bytes.length, 'bytes', 'Invalid key length');
+    }
+    return VaultKey._(params, bytes);
+  }
+
   final KdfParams params;
 
   final Uint8List _bytes;

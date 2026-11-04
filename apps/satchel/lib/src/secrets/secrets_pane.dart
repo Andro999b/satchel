@@ -5,7 +5,12 @@ import 'package:satchel_storage/satchel_storage.dart';
 
 import '../l10n/l10n.dart';
 import '../export/export_secrets.dart';
+import '../files/rename_vault_file.dart';
+import '../files/vault_file.dart';
+import '../import/import_secrets.dart';
 import '../navigation/app_location.dart';
+import '../pin/pin_setup.dart';
+import '../pin/pin_unlock.dart';
 import '../vault/unlocked_vaults.dart';
 import '../vault/vault_providers.dart';
 import '../widgets/message_view.dart';
@@ -126,7 +131,7 @@ class _SecretsPaneState extends ConsumerState<SecretsPane> {
               automaticallyImplyLeading: false,
               title: Text(vaultNameFromPath(widget.path)),
               actions: [
-                if (vault != null)
+                if (vault != null) ...[
                   IconButton(
                     tooltip: l10n.lockTooltip,
                     icon: const Icon(Icons.lock_outline),
@@ -134,11 +139,84 @@ class _SecretsPaneState extends ConsumerState<SecretsPane> {
                         .read(unlockedVaultsProvider.notifier)
                         .lock(vaultRef),
                   ),
+                  _FileMenu(vault: vault),
+                ],
               ],
             ),
       body: vault == null
           ? _UnlockForm(key: ValueKey(vaultRef), vaultRef: vaultRef)
           : _SecretList(vault: vault, selected: selected, onToggle: _toggle),
+    );
+  }
+}
+
+/// Actions on the unlocked file as a whole: rename, its PIN (Android),
+/// import and export.
+class _FileMenu extends ConsumerWidget {
+  const _FileMenu({required this.vault});
+
+  final UnlockedVault vault;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final vaultRef = vault.ref;
+    final name = vaultNameFromPath(vaultRef.path);
+    final pinSupported = ref.watch(pinStoreProvider) != null;
+    final hasPin = ref.watch(
+      pinUnlockProvider.select((v) => v.value?.contains(vaultRef) ?? false),
+    );
+    return MenuAnchor(
+      menuChildren: [
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.edit_outlined),
+          onPressed: () => renameVaultFile(
+            context,
+            ref,
+            VaultFile(
+              storageId: vaultRef.storageId,
+              path: vaultRef.path,
+              revision: vault.revision,
+            ),
+          ),
+          child: Text(l10n.renameFile),
+        ),
+        const Divider(),
+        if (pinSupported) ...[
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.pin_outlined),
+            onPressed: () => setUpPin(context, vaultRef, name: name),
+            child: Text(hasPin ? l10n.changePin : l10n.setUpPin),
+          ),
+          if (hasPin)
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.backspace_outlined),
+              onPressed: () => removePin(context, ref, vaultRef, name: name),
+              child: Text(l10n.removePin),
+            ),
+          const Divider(),
+        ],
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.file_upload_outlined),
+          onPressed: () => importSecrets(context, ref, vaultRef),
+          child: Text(l10n.importFile),
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.file_download_outlined),
+          onPressed: () => exportSecrets(
+            context,
+            vaultRef,
+            count: vault.payload.secrets.length,
+          ),
+          child: Text(l10n.exportFile),
+        ),
+      ],
+      builder: (context, controller, _) => IconButton(
+        tooltip: l10n.fileActionsTooltip,
+        icon: const Icon(Icons.more_vert),
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
+      ),
     );
   }
 }
@@ -335,6 +413,10 @@ class _SecretTile extends ConsumerWidget {
 /// Why unlocking failed, localized in `build`.
 enum _UnlockError {
   wrongPassword,
+  wrongPin,
+  pinTooManyAttempts,
+  pinPasswordChanged,
+  pinUnavailable,
   newerVersion,
   invalidFile,
   readFailed,
@@ -353,32 +435,73 @@ class _UnlockForm extends ConsumerStatefulWidget {
 class _UnlockFormState extends ConsumerState<_UnlockForm> {
   final _password = TextEditingController();
   final _focus = FocusNode();
+  final _pin = TextEditingController();
+  final _pinFocus = FocusNode();
   var _obscure = true;
   var _busy = false;
+  var _usePassword = false;
   _UnlockError? _error;
+  var _attemptsLeft = 0;
 
   @override
   void dispose() {
-    _password
-      ..clear()
-      ..dispose();
+    for (final controller in [_password, _pin]) {
+      controller
+        ..clear()
+        ..dispose();
+    }
     _focus.dispose();
+    _pinFocus.dispose();
     super.dispose();
   }
 
+  bool get _pinMode =>
+      !_usePassword &&
+      (ref.read(pinUnlockProvider).value?.contains(widget.vaultRef) ?? false);
+
+  void _switchMode() {
+    setState(() {
+      _usePassword = !_usePassword;
+      _error = null;
+    });
+    final focus = _usePassword ? _focus : _pinFocus;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) focus.requestFocus();
+    });
+  }
+
   Future<void> _unlock() async {
-    if (_busy || _password.text.isEmpty) return;
+    final pinMode = _pinMode;
+    if (_busy || (pinMode ? !isValidPin(_pin.text) : _password.text.isEmpty)) {
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     _UnlockError? error;
     try {
-      await ref
-          .read(unlockedVaultsProvider.notifier)
-          .unlock(widget.vaultRef, _password.text);
+      if (pinMode) {
+        await ref
+            .read(pinUnlockProvider.notifier)
+            .unlock(widget.vaultRef, _pin.text);
+      } else {
+        await ref
+            .read(unlockedVaultsProvider.notifier)
+            .unlock(widget.vaultRef, _password.text);
+      }
+    } on WrongPinException catch (e) {
+      error = _UnlockError.wrongPin;
+      _attemptsLeft = e.attemptsLeft;
+    } on PinRemovedException catch (e) {
+      error = switch (e.reason) {
+        PinRemovedReason.tooManyAttempts => _UnlockError.pinTooManyAttempts,
+        PinRemovedReason.passwordChanged => _UnlockError.pinPasswordChanged,
+        PinRemovedReason.unavailable => _UnlockError.pinUnavailable,
+      };
     } on VaultAuthenticationException {
-      error = _UnlockError.wrongPassword;
+      // The PIN was right, so the file itself doesn't decrypt.
+      error = pinMode ? _UnlockError.invalidFile : _UnlockError.wrongPassword;
     } on UnsupportedVaultVersionException {
       error = _UnlockError.newerVersion;
     } on VaultFormatException {
@@ -392,20 +515,33 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
     }
     // On success this form is replaced by the secret list.
     if (!mounted) return;
+    if (pinMode) _pin.clear();
     setState(() {
       _busy = false;
       _error = error;
     });
-    if (error == _UnlockError.wrongPassword) {
-      // Select the password for retyping once the field is enabled again.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _focus.requestFocus();
-        _password.selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: _password.text.length,
-        );
-      });
+    switch (error) {
+      case _UnlockError.wrongPassword:
+        // Select the password for retyping once the field is enabled again.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _focus.requestFocus();
+          _password.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _password.text.length,
+          );
+        });
+      case _UnlockError.wrongPin:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _pinFocus.requestFocus();
+        });
+      case _UnlockError.pinTooManyAttempts ||
+          _UnlockError.pinPasswordChanged ||
+          _UnlockError.pinUnavailable:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _focus.requestFocus();
+        });
+      default:
     }
   }
 
@@ -413,9 +549,19 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final hasPin = ref.watch(
+      pinUnlockProvider.select(
+        (v) => v.value?.contains(widget.vaultRef) ?? false,
+      ),
+    );
+    final pinMode = hasPin && !_usePassword;
     final error = switch (_error) {
       null => null,
       _UnlockError.wrongPassword => l10n.unlockWrongPassword,
+      _UnlockError.wrongPin => l10n.unlockWrongPin(_attemptsLeft),
+      _UnlockError.pinTooManyAttempts => l10n.unlockPinTooManyAttempts,
+      _UnlockError.pinPasswordChanged => l10n.unlockPinPasswordChanged,
+      _UnlockError.pinUnavailable => l10n.unlockPinUnavailable,
       _UnlockError.newerVersion => l10n.unlockNewerVersion,
       _UnlockError.invalidFile => l10n.unlockInvalidFile,
       _UnlockError.readFailed => l10n.unlockReadError,
@@ -436,35 +582,52 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
                 color: theme.colorScheme.outline,
               ),
               const SizedBox(height: 16),
-              Text(l10n.lockedFileMessage, textAlign: TextAlign.center),
+              Text(
+                pinMode ? l10n.lockedFilePinMessage : l10n.lockedFileMessage,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 16),
-              TextField(
-                key: const Key('unlockPassword'),
-                controller: _password,
-                focusNode: _focus,
-                enabled: !_busy,
-                autofocus: true,
-                obscureText: _obscure,
-                autocorrect: false,
-                enableSuggestions: false,
-                keyboardType: TextInputType.visiblePassword,
-                decoration: InputDecoration(
-                  labelText: l10n.passwordLabel,
+              if (pinMode)
+                PinField(
+                  key: const Key('unlockPin'),
+                  controller: _pin,
+                  focusNode: _pinFocus,
+                  label: l10n.pinLabel,
+                  enabled: !_busy,
+                  autofocus: true,
                   errorText: error,
-                  errorMaxLines: 3,
-                  // Keep Tab moving to Unlock; the button stays clickable.
-                  suffixIcon: ExcludeFocus(
-                    child: IconButton(
-                      tooltip: _obscure ? l10n.showPassword : l10n.hidePassword,
-                      icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off,
+                  onSubmitted: _unlock,
+                )
+              else
+                TextField(
+                  key: const Key('unlockPassword'),
+                  controller: _password,
+                  focusNode: _focus,
+                  enabled: !_busy,
+                  autofocus: true,
+                  obscureText: _obscure,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  keyboardType: TextInputType.visiblePassword,
+                  decoration: InputDecoration(
+                    labelText: l10n.passwordLabel,
+                    errorText: error,
+                    errorMaxLines: 3,
+                    // Keep Tab moving to Unlock; the button stays clickable.
+                    suffixIcon: ExcludeFocus(
+                      child: IconButton(
+                        tooltip: _obscure
+                            ? l10n.showPassword
+                            : l10n.hidePassword,
+                        icon: Icon(
+                          _obscure ? Icons.visibility : Icons.visibility_off,
+                        ),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
+                  onSubmitted: (_) => _unlock(),
                 ),
-                onSubmitted: (_) => _unlock(),
-              ),
               const SizedBox(height: 16),
               if (_busy) ...[
                 const LinearProgressIndicator(),
@@ -474,15 +637,28 @@ class _UnlockFormState extends ConsumerState<_UnlockForm> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
-              ] else
+              ] else ...[
                 ListenableBuilder(
-                  listenable: _password,
+                  listenable: Listenable.merge([_password, _pin]),
                   builder: (context, _) => FilledButton.icon(
-                    onPressed: _password.text.isEmpty ? null : _unlock,
+                    onPressed:
+                        (pinMode
+                            ? isValidPin(_pin.text)
+                            : _password.text.isNotEmpty)
+                        ? _unlock
+                        : null,
                     icon: const Icon(Icons.lock_open),
                     label: Text(l10n.unlock),
                   ),
                 ),
+                if (hasPin) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _switchMode,
+                    child: Text(pinMode ? l10n.usePassword : l10n.usePin),
+                  ),
+                ],
+              ],
             ],
           ),
         ),

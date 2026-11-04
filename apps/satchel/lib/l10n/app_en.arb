@@ -998,6 +998,10 @@
   "@lockTooltip": {
     "description": "Tooltip of the button that locks an unlocked vault file."
   },
+  "lockFile": "Lock",
+  "@lockFile": {
+    "description": "Menu item that locks an unlocked vault file."
+  },
   "noSecrets": "No secrets in this file yet",
   "@noSecrets": {
     "description": "Shown when an unlocked vault file has no secrets."
@@ -1415,5 +1419,129 @@
   "unlockSignInRequired": "Could not sign in to the Google account of this storage. Try again.",
   "@unlockSignInRequired": {
     "description": "Unlock error when signing in to the Google account of a Drive storage was cancelled or failed."
+  },
+  "setUpPin": "Set up PIN",
+  "@setUpPin": {
+    "description": "Menu item that lets an unlocked vault file be unlocked with a PIN on this device."
+  },
+  "changePin": "Change PIN",
+  "@changePin": {
+    "description": "Menu item that replaces the PIN of a vault file."
+  },
+  "removePin": "Remove PIN",
+  "@removePin": {
+    "description": "Menu item that turns off PIN unlock for a vault file."
+  },
+  "pinSetupTitle": "PIN for \"{name}\"",
+  "@pinSetupTitle": {
+    "description": "Title of the dialog that sets the PIN of a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "pinSetupMessage": "Unlock this file on this device with a PIN of 6 to 8 digits instead of its password. After {count} wrong PINs, the password is needed again.",
+  "@pinSetupMessage": {
+    "description": "Explains PIN unlock in the PIN setup dialog.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "pinLabel": "PIN",
+  "@pinLabel": {
+    "description": "Label of PIN fields."
+  },
+  "confirmPinLabel": "Confirm PIN",
+  "@confirmPinLabel": {
+    "description": "Label of the field that repeats a new PIN."
+  },
+  "pinInvalid": "Enter 6 to 8 digits",
+  "@pinInvalid": {
+    "description": "Validation error for a PIN that is not 6 to 8 digits."
+  },
+  "pinMismatch": "The PINs don't match",
+  "@pinMismatch": {
+    "description": "Validation error when the PIN confirmation differs."
+  },
+  "pinSetupError": "Could not save the PIN. Try again.",
+  "@pinSetupError": {
+    "description": "Shown when saving a PIN failed."
+  },
+  "pinSaved": "You can now unlock \"{name}\" with its PIN",
+  "@pinSaved": {
+    "description": "Shown after the PIN of a vault file was set.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "pinRemoved": "Removed the PIN of \"{name}\"",
+  "@pinRemoved": {
+    "description": "Shown after the PIN of a vault file was removed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "pinRemoveError": "Could not remove the PIN. Try again.",
+  "@pinRemoveError": {
+    "description": "Shown when removing the PIN of a vault file failed."
+  },
+  "filePinEnabled": "PIN unlock",
+  "@filePinEnabled": {
+    "description": "Shown under a vault file that can be unlocked with a PIN."
+  },
+  "lockedFilePinMessage": "This file is locked. Enter its PIN to open it.",
+  "@lockedFilePinMessage": {
+    "description": "Shown above the PIN field of a locked vault file."
+  },
+  "usePassword": "Use password instead",
+  "@usePassword": {
+    "description": "Switches the unlock form from the PIN to the password."
+  },
+  "usePin": "Use PIN instead",
+  "@usePin": {
+    "description": "Switches the unlock form from the password to the PIN."
+  },
+  "unlockWrongPin": "{count, plural, =1{Wrong PIN. 1 attempt left.} other{Wrong PIN. {count} attempts left.}}",
+  "@unlockWrongPin": {
+    "description": "Unlock error for a wrong PIN, with the attempts left before the PIN is removed.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "unlockPinTooManyAttempts": "Too many wrong PINs, so the PIN was removed. Enter the password.",
+  "@unlockPinTooManyAttempts": {
+    "description": "Unlock message after the last allowed wrong PIN."
+  },
+  "unlockPinPasswordChanged": "The password of this file was changed, so its PIN was removed. Enter the new password.",
+  "@unlockPinPasswordChanged": {
+    "description": "Unlock message when the file's password changed on another device."
+  },
+  "unlockPinUnavailable": "The PIN of this file is no longer available. Enter the password.",
+  "@unlockPinUnavailable": {
+    "description": "Unlock message when the stored PIN data is missing or unreadable."
+  },
+  "passwordChangedPinRemoved": "Changed the password of \"{name}\". Its PIN was removed; set it up again to use it.",
+  "@passwordChangedPinRemoved": {
+    "description": "Shown after the password of a vault file with a PIN was changed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
   }
 }

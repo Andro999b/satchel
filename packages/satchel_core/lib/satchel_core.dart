@@ -8,6 +8,7 @@ export 'src/ids.dart';
 export 'src/kdf.dart' show KdfParams;
 export 'src/merge.dart';
 export 'src/password_generator.dart';
+export 'src/pin_key_wrap.dart';
 export 'src/plain_export.dart';
 export 'src/secret.dart';
 export 'src/secret_info.dart';

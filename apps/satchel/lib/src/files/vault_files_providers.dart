@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
+import '../pin/pin_unlock.dart';
 import '../storage/storage_providers.dart';
 import '../vault/unlocked_vaults.dart';
 import '../vault/vault_providers.dart';
@@ -144,9 +145,9 @@ class VaultFiles extends _$VaultFiles {
       if (ref.mounted) ref.invalidateSelf();
       rethrow;
     }
-    ref
-        .read(unlockedVaultsProvider.notifier)
-        .lock(VaultRef(storageId, file.path));
+    final vault = VaultRef(storageId, file.path);
+    ref.read(unlockedVaultsProvider.notifier).lock(vault);
+    await ref.read(pinUnlockProvider.notifier).forget(vault);
     if (ref.mounted) ref.invalidateSelf();
   }
 

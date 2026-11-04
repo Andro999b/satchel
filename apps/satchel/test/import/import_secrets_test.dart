@@ -3,9 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:satchel/src/files/files_pane.dart';
 import 'package:satchel/src/import/import_providers.dart';
 import 'package:satchel/src/import/import_secrets.dart';
+import 'package:satchel/src/secrets/secrets_pane.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
 import 'package:satchel/src/vault/vault_providers.dart';
@@ -65,7 +65,9 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: testApp(const FilesPane(storageId: 's')),
+        child: testApp(
+          const SecretsPane(storageId: 's', path: 'personal.satchel'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -89,6 +91,11 @@ void main() {
     secrets: secrets,
   );
 
+  Finder fileMenu() => find.descendant(
+    of: find.byType(AppBar),
+    matching: find.byTooltip('More actions'),
+  );
+
   /// Picks [name] with [bytes] from the file menu.
   Future<void> startImport(
     WidgetTester tester,
@@ -96,7 +103,7 @@ void main() {
     Uint8List bytes,
   ) async {
     importer.next = PickedFile(name: name, bytes: bytes);
-    await tester.tap(find.byTooltip('More actions'));
+    await tester.tap(fileMenu());
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(MenuItemButton, 'Import'));
     await settleCrypto(tester, find.text('never shown'));
@@ -112,15 +119,7 @@ void main() {
     notifier().lock(vault);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('More actions'));
-    await tester.pumpAndSettle();
-
-    expect(
-      tester
-          .widget<MenuItemButton>(find.widgetWithText(MenuItemButton, 'Import'))
-          .onPressed,
-      isNull,
-    );
+    expect(fileMenu(), findsNothing);
   });
 
   testWidgets('imports new secrets from a plain export', (tester) async {

@@ -219,36 +219,33 @@ void main() {
     expect(store.configs, hasLength(1));
   });
 
-  test(
-    'rename persists and preserves storage identity',
-    () async {
-      store.configs = [
-        directoryConfig('a', '/a'),
-        driveConfig(
-          'd',
-          'folder',
-          accountId: 'ada',
-          locationName: 'My Drive / Vaults',
-        ),
-      ];
-      final c = container(StoragePlatform.linux);
-      final notifier = c.read(storageConfigsProvider.notifier);
+  test('rename persists and preserves storage identity', () async {
+    store.configs = [
+      directoryConfig('a', '/a'),
+      driveConfig(
+        'd',
+        'folder',
+        accountId: 'ada',
+        locationName: 'My Drive / Vaults',
+      ),
+    ];
+    final c = container(StoragePlatform.linux);
+    final notifier = c.read(storageConfigsProvider.notifier);
 
-      for (final original in [...store.configs]) {
-        await notifier.rename(original.id, '  Renamed ${original.id}  ');
-        final renamed = (await c.read(storageConfigsProvider.future))
-            .singleWhere((config) => config.id == original.id);
-        expect(renamed.toJson(), {
-          ...original.toJson(),
-          'displayName': 'Renamed ${original.id}',
-        });
-      }
+    for (final original in [...store.configs]) {
+      await notifier.rename(original.id, '  Renamed ${original.id}  ');
+      final renamed = (await c.read(storageConfigsProvider.future))
+          .singleWhere((config) => config.id == original.id);
+      expect(renamed.toJson(), {
+        ...original.toJson(),
+        'displayName': 'Renamed ${original.id}',
+      });
+    }
 
-      c.invalidate(storageConfigsProvider);
-      expect(await c.read(storageConfigsProvider.future), store.configs);
-      expect(picker.released, isEmpty);
-    },
-  );
+    c.invalidate(storageConfigsProvider);
+    expect(await c.read(storageConfigsProvider.future), store.configs);
+    expect(picker.released, isEmpty);
+  });
 
   test('rename rejects empty names, missing and built-in storages', () async {
     store.configs = [directoryConfig('a', '/a')];

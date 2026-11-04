@@ -5,6 +5,7 @@ import 'package:satchel_storage/satchel_storage.dart';
 
 import '../files/vault_file.dart';
 import '../files/vault_files_providers.dart';
+import '../pin/pin_unlock.dart';
 import '../storage/storage_providers.dart';
 import 'vault_providers.dart';
 
@@ -104,6 +105,31 @@ class UnlockedVaults extends _$UnlockedVaults {
       key: opened.key,
       revision: blob.entry.revision,
     );
+  }
+
+  /// Reads the vault [vault] and decrypts it with the key [keyFor] returns
+  /// for the file's KDF parameters, e.g. one unwrapped with a PIN. Takes
+  /// ownership of that key.
+  ///
+  /// Does nothing if it is already unlocked. Throws what [keyFor] throws,
+  /// the `VaultException`s of [VaultCodec.decryptWithKey], and the
+  /// `StorageException`s of reading the file.
+  Future<void> unlockWithKey(
+    VaultRef vault,
+    Future<VaultKey> Function(KdfParams params) keyFor,
+  ) async {
+    if (_vaults.containsKey(vault)) return;
+    final storage = await _storage(vault.storageId);
+    final blob = await storage.read(vault.path);
+    final key = await keyFor(VaultCodec.readKdfParams(blob.bytes));
+    final VaultPayload payload;
+    try {
+      payload = await VaultCodec.decryptWithKey(blob.bytes, key);
+    } catch (_) {
+      key.destroy();
+      rethrow;
+    }
+    adopt(vault, payload: payload, key: key, revision: blob.entry.revision);
   }
 
   /// Adds an already decrypted vault, e.g. one that was just created. Takes
@@ -243,8 +269,11 @@ class UnlockedVaults extends _$UnlockedVaults {
       rethrow;
     }
 
+    final renamed = VaultRef(vault.storageId, path);
+    if (ref.mounted) {
+      await ref.read(pinUnlockProvider.notifier).moved(vault, renamed);
+    }
     if (ref.mounted && identical(_vaults[vault], current)) {
-      final renamed = VaultRef(vault.storageId, path);
       _set({
         for (final e in _vaults.entries)
           if (e.key != vault) e.key: e.value,
@@ -332,7 +361,12 @@ class UnlockedVaults extends _$UnlockedVaults {
         expectedRevision: replacing?.revision,
       );
       // The session of a replaced file no longer matches the storage.
-      if (replacing != null && ref.mounted) lock(VaultRef(storageId, path));
+      if (replacing != null && ref.mounted) {
+        lock(VaultRef(storageId, path));
+        await ref
+            .read(pinUnlockProvider.notifier)
+            .forget(VaultRef(storageId, path));
+      }
       try {
         final written = await target.read(path);
         if (!listEquals(written.bytes, blob.bytes)) {
@@ -423,6 +457,8 @@ class UnlockedVaults extends _$UnlockedVaults {
         rethrow;
       }
 
+      // The PIN wraps the old key, which no longer opens the file.
+      if (ref.mounted) await ref.read(pinUnlockProvider.notifier).forget(vault);
       if (ref.mounted) ref.invalidate(vaultFilesProvider(vault.storageId));
       if (session != null &&
           ref.mounted &&

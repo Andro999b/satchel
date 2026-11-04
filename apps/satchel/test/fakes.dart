@@ -4,6 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:satchel/src/accounts/google_account_store.dart';
 import 'package:satchel/src/accounts/google_accounts.dart';
+import 'package:satchel/src/pin/pin_store.dart';
+import 'package:satchel/src/pin/pin_unlock.dart';
+import 'package:satchel/src/vault/unlocked_vaults.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel/src/storage/storage_config_store.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
@@ -104,16 +107,44 @@ StorageConfig driveConfig(
   accountId: accountId,
 );
 
-/// Overrides for a fake platform, preference store and picker.
+/// Overrides for a fake platform, preference store and picker. PIN unlock is
+/// off unless [pins] is given.
 List<Override> storageOverrides({
   required StoragePlatform? platform,
   required StorageConfigStore store,
   DirectoryPicker? picker,
+  PinStore? pins,
 }) => [
   storagePlatformProvider.overrideWithValue(platform),
   storageConfigStoreProvider.overrideWithValue(store),
   directoryPickerProvider.overrideWithValue(picker ?? FakeDirectoryPicker()),
+  pinStoreProvider.overrideWithValue(pins),
 ];
+
+final class MemoryPinStore implements PinStore {
+  final records = <VaultRef, PinRecord>{};
+  Uint8List? secret;
+  Object? writeError;
+
+  @override
+  Future<Uint8List> deviceSecret() async =>
+      Uint8List.fromList(secret ??= PinKeyWrap.generateDeviceSecret());
+
+  @override
+  Future<Map<VaultRef, PinRecord>> loadAll() async => {...records};
+
+  @override
+  Future<PinRecord?> read(VaultRef vault) async => records[vault];
+
+  @override
+  Future<void> write(VaultRef vault, PinRecord record) async {
+    if (writeError case final error?) throw error;
+    records[vault] = record;
+  }
+
+  @override
+  Future<void> delete(VaultRef vault) async => records.remove(vault);
+}
 
 final class MemoryGoogleAccountStore implements GoogleAccountStore {
   MemoryGoogleAccountStore([List<GoogleAccount> accounts = const []])

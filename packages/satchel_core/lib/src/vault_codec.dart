@@ -112,6 +112,11 @@ abstract final class VaultCodec {
     }
   }
 
+  /// The KDF parameters in the header of [bytes], without deriving a key.
+  ///
+  /// Throws [VaultFormatException] or [UnsupportedVaultVersionException].
+  static KdfParams readKdfParams(Uint8List bytes) => _parse(bytes).params;
+
   /// Decrypts [bytes] with an already derived [key], e.g. to verify a write.
   /// The file must use the key's KDF parameters.
   static Future<VaultPayload> decryptWithKey(

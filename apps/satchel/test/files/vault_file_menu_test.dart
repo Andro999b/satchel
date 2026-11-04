@@ -11,6 +11,7 @@ import 'package:satchel/src/files/files_pane.dart';
 import 'package:satchel/src/files/rename_vault_file.dart';
 import 'package:satchel/src/files/vault_files_providers.dart';
 import 'package:satchel/src/navigation/app_location.dart';
+import 'package:satchel/src/secrets/secrets_pane.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
 import 'package:satchel/src/vault/vault_providers.dart';
@@ -54,7 +55,18 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: testApp(const FilesPane(storageId: 's')),
+        child: testApp(
+          Scaffold(
+            body: Row(
+              children: [
+                const Expanded(child: FilesPane(storageId: 's')),
+                Expanded(
+                  child: SecretsPane(storageId: 's', path: vault.path),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -86,6 +98,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Chooses [label] in the open file's menu in the secrets pane.
+  Future<void> chooseInFile(WidgetTester tester, String label) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SecretsPane),
+        matching: find.byTooltip('More actions'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(menuItem(label));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('each file has a menu of actions', (tester) async {
     await pumpFiles(tester);
 
@@ -95,54 +120,33 @@ void main() {
 
     bool enabled(String label) =>
         tester.widget<MenuItemButton>(menuItem(label)).onPressed != null;
-    expect(enabled('Rename'), isFalse);
+    expect(menuItem('Rename'), findsNothing);
     expect(enabled('Change password'), isTrue);
-    expect(enabled('Export'), isFalse);
     expect(enabled('Delete'), isTrue);
+    expect(menuItem('Lock'), findsNothing);
+    expect(menuItem('Export'), findsNothing);
+    expect(menuItem('Import'), findsNothing);
   });
 
-  testWidgets('exports every secret of an unlocked file', (tester) async {
+  testWidgets('locks an unlocked file from its menu', (tester) async {
     await pumpFiles(tester);
     await unlock(tester);
 
-    await choose(tester, 'Export');
-    expect(find.text('Export an empty file'), findsOneWidget);
-    await tester.tap(
+    await choose(tester, 'Lock');
+
+    expect(isUnlocked(), isFalse);
+    expect(
       find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'Export'),
+        of: find.widgetWithText(ListTile, 'personal'),
+        matching: find.byIcon(Icons.lock_outline),
       ),
-    );
-    await settleCrypto(tester, find.byType(AlertDialog));
-
-    final file = exporter.saved.single;
-    expect(file.name, 'personal.satchel');
-    final opened = await tester.runAsync(
-      () => VaultCodec.decrypt(file.bytes, password: 'hunter22'),
-    );
-    expect(
-      opened!.payload.fileId,
-      container.read(unlockedVaultsProvider)[vault]!.payload.fileId,
-    );
-    expect(find.text('Exported to "personal.satchel"'), findsOneWidget);
-  });
-
-  testWidgets('rename is offered once the file is unlocked', (tester) async {
-    await pumpFiles(tester);
-    await unlock(tester);
-
-    await tester.tap(find.byTooltip('More actions').first);
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.widget<MenuItemButton>(menuItem('Rename')).onPressed,
-      isNotNull,
+      findsOneWidget,
     );
   });
 
   group('rename', () {
     Future<void> renameTo(WidgetTester tester, String name) async {
-      await choose(tester, 'Rename');
+      await chooseInFile(tester, 'Rename');
       await tester.enterText(find.byKey(const Key('name')), name);
       await tester.tap(
         find.descendant(
@@ -159,7 +163,7 @@ void main() {
       await pumpFiles(tester);
       await unlock(tester);
 
-      await choose(tester, 'Rename');
+      await chooseInFile(tester, 'Rename');
       expect(find.text('Rename "personal"'), findsOneWidget);
       final field = tester.widget<TextField>(
         find.descendant(

@@ -26,11 +26,28 @@ final class VaultCrypto {
     this.memoryKiB = KdfParams.defaultMemoryKiB,
     this.iterations = KdfParams.defaultIterations,
     this.parallelism = KdfParams.defaultParallelism,
+    this.pinMemoryKiB = PinKeyWrap.defaultMemoryKiB,
+    this.pinIterations = PinKeyWrap.defaultIterations,
   });
 
   final int memoryKiB;
   final int iterations;
   final int parallelism;
+  final int pinMemoryKiB;
+  final int pinIterations;
+
+  /// Encrypts [key] under [pin] and [deviceSecret].
+  Future<PinWrappedKey> wrapWithPin(
+    VaultKey key, {
+    required String pin,
+    required Uint8List deviceSecret,
+  }) => PinKeyWrap.wrap(
+    key,
+    pin: pin,
+    deviceSecret: deviceSecret,
+    memoryKiB: pinMemoryKiB,
+    iterations: pinIterations,
+  );
 
   /// Derives a new key for [password] (slow by design) and encrypts
   /// [payload] with it.

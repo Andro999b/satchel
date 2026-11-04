@@ -4,15 +4,13 @@ import 'package:satchel_storage/satchel_storage.dart';
 
 import '../accounts/account_management_dialog.dart';
 import '../accounts/google_accounts.dart';
-import '../export/export_secrets.dart';
-import '../import/import_secrets.dart';
 import '../navigation/app_location.dart';
+import '../pin/pin_unlock.dart';
 import '../widgets/message_view.dart';
 import 'change_vault_password.dart';
 import 'copy_vault_file.dart';
 import 'delete_vault_file.dart';
 import 'new_vault_file_dialog.dart';
-import 'rename_vault_file.dart';
 import 'vault_file.dart';
 import 'vault_files_providers.dart';
 import '../l10n/l10n.dart';
@@ -167,10 +165,12 @@ class _VaultFileTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final vaultRef = VaultRef(file.storageId, file.path);
     final sessionRevision = ref.watch(
-      unlockedVaultsProvider.select(
-        (vaults) => vaults[VaultRef(file.storageId, file.path)]?.revision,
-      ),
+      unlockedVaultsProvider.select((vaults) => vaults[vaultRef]?.revision),
+    );
+    final hasPin = ref.watch(
+      pinUnlockProvider.select((v) => v.value?.contains(vaultRef) ?? false),
     );
     final unlocked = sessionRevision != null;
     // Act on exactly the version the user unlocked, or else the listed one.
@@ -194,18 +194,18 @@ class _VaultFileTile extends ConsumerWidget {
         ),
       ),
       title: Text(file.name),
+      subtitle: hasPin ? Text(l10n.filePinEnabled) : null,
       trailing: Focus(
         parentNode: FocusScope.of(context),
         child: MenuAnchor(
           menuChildren: [
-            MenuItemButton(
-              leadingIcon: const Icon(Icons.edit_outlined),
-              // The name is also stored inside the encrypted file.
-              onPressed: unlocked
-                  ? () => renameVaultFile(context, ref, current)
-                  : null,
-              child: Text(l10n.renameFile),
-            ),
+            if (unlocked)
+              MenuItemButton(
+                leadingIcon: const Icon(Icons.lock_outline),
+                onPressed: () =>
+                    ref.read(unlockedVaultsProvider.notifier).lock(vaultRef),
+                child: Text(l10n.lockFile),
+              ),
             MenuItemButton(
               leadingIcon: const Icon(Icons.password),
               onPressed: () => changeVaultPassword(context, current),
@@ -215,22 +215,6 @@ class _VaultFileTile extends ConsumerWidget {
               leadingIcon: const Icon(Icons.file_copy_outlined),
               onPressed: () => copyVaultFile(context, ref, current),
               child: Text(l10n.copyFile),
-            ),
-            MenuItemButton(
-              leadingIcon: const Icon(Icons.file_upload_outlined),
-              onPressed: unlocked
-                  ? () => importSecrets(
-                      context,
-                      ref,
-                      VaultRef(file.storageId, file.path),
-                    )
-                  : null,
-              child: Text(l10n.importFile),
-            ),
-            MenuItemButton(
-              leadingIcon: const Icon(Icons.file_download_outlined),
-              onPressed: unlocked ? () => _exportAll(context, ref) : null,
-              child: Text(l10n.exportFile),
             ),
             MenuItemButton(
               leadingIcon: const Icon(Icons.delete_outline),
@@ -257,12 +241,5 @@ class _VaultFileTile extends ConsumerWidget {
           .read(currentLocationProvider.notifier)
           .openFile(file.storageId, file.path),
     );
-  }
-
-  Future<void> _exportAll(BuildContext context, WidgetRef ref) async {
-    final vault = VaultRef(file.storageId, file.path);
-    final payload = ref.read(unlockedVaultsProvider)[vault]?.payload;
-    if (payload == null) return;
-    await exportSecrets(context, vault, count: payload.secrets.length);
   }
 }
