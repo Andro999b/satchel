@@ -12,6 +12,7 @@ import '../pin/pin_setup.dart';
 import '../pin/pin_unlock.dart';
 import '../vault/unlocked_vaults.dart';
 import '../vault/vault_providers.dart';
+import '../widgets/fab_padding.dart';
 import '../widgets/message_view.dart';
 import 'copy_secrets.dart';
 import 'delete_secret.dart';
@@ -101,18 +102,22 @@ class _SecretsPaneState extends ConsumerState<SecretsPane> {
         body: _SecretList(vault: vault, selected: selected, onToggle: _toggle),
       ),
       final vault => Scaffold(
-        floatingActionButton: _NewSecretButton(vaultRef: vaultRef),
-        appBar: _fileAppBar(
-          actions: [
-            IconButton(
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: null,
               tooltip: l10n.lockTooltip,
-              icon: const Icon(Icons.lock_outline),
               onPressed: () =>
                   ref.read(unlockedVaultsProvider.notifier).lock(vaultRef),
+              child: const Icon(Icons.lock_outline),
             ),
-            _FileMenu(vault: vault),
+            const SizedBox(height: 16),
+            _NewSecretButton(vaultRef: vaultRef),
           ],
         ),
+        appBar: _fileAppBar(actions: [_FileMenu(vault: vault)]),
         body: _SecretList(vault: vault, selected: selected, onToggle: _toggle),
       ),
     };
@@ -323,6 +328,7 @@ class _SecretList extends ConsumerWidget {
     final openId = ref.watch(currentLocationProvider.select((l) => l.secretId));
     final now = ref.watch(appClockProvider).now();
     return ListView(
+      padding: twoFabListPadding,
       children: [
         for (final secret in secrets)
           _SecretTile(

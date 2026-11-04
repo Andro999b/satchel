@@ -6,6 +6,7 @@ import '../accounts/account_management_dialog.dart';
 import '../accounts/google_accounts.dart';
 import '../navigation/app_location.dart';
 import '../pin/pin_unlock.dart';
+import '../widgets/fab_padding.dart';
 import '../widgets/message_view.dart';
 import 'change_vault_password.dart';
 import 'copy_vault_file.dart';
@@ -74,6 +75,7 @@ class FilesPane extends ConsumerWidget {
                   scrollable: true,
                 )
               : ListView(
+                  padding: fabListPadding,
                   children: [
                     for (final file in files)
                       _VaultFileTile(

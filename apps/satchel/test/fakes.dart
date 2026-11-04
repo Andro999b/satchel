@@ -7,6 +7,7 @@ import 'package:satchel/src/accounts/google_accounts.dart';
 import 'package:satchel/src/pin/biometric_store.dart';
 import 'package:satchel/src/pin/pin_store.dart';
 import 'package:satchel/src/pin/pin_unlock.dart';
+import 'package:satchel/src/settings/auto_lock_settings.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
 import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel/src/storage/storage_config_store.dart';
@@ -116,13 +117,27 @@ List<Override> storageOverrides({
   DirectoryPicker? picker,
   PinStore? pins,
   BiometricStore? biometrics,
+  AutoLockStore? autoLock,
 }) => [
   storagePlatformProvider.overrideWithValue(platform),
   storageConfigStoreProvider.overrideWithValue(store),
   directoryPickerProvider.overrideWithValue(picker ?? FakeDirectoryPicker()),
   pinStoreProvider.overrideWithValue(pins),
   biometricStoreProvider.overrideWithValue(biometrics),
+  autoLockStoreProvider.overrideWithValue(autoLock ?? MemoryAutoLockStore()),
 ];
+
+final class MemoryAutoLockStore implements AutoLockStore {
+  MemoryAutoLockStore([this.delay]);
+
+  AutoLockDelay? delay;
+
+  @override
+  Future<AutoLockDelay?> load() async => delay;
+
+  @override
+  Future<void> save(AutoLockDelay delay) async => this.delay = delay;
+}
 
 /// [BiometricStore] that "authenticates" without a prompt.
 final class FakeBiometricStore implements BiometricStore {

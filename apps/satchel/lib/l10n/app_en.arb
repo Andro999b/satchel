@@ -4,9 +4,63 @@
   "@appTitle": {
     "description": "Application name, shown in the title bar and the storages pane."
   },
-  "manageAccountsTooltip": "Accounts and settings",
-  "@manageAccountsTooltip": {
-    "description": "Tooltip for the settings button on the storages pane."
+  "settingsTooltip": "Settings",
+  "@settingsTooltip": {
+    "description": "Tooltip for the settings menu button on the storages pane."
+  },
+  "googleAccountsMenu": "Google accounts",
+  "@googleAccountsMenu": {
+    "description": "Settings menu item that opens the Google account management dialog."
+  },
+  "autoLockMenu": "Auto-lock",
+  "@autoLockMenu": {
+    "description": "Settings submenu choosing how long the app may be in the background before every file is locked. Keep it short."
+  },
+  "autoLockMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@autoLockMinutes": {
+    "description": "Auto-lock delay choice.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "autoLockOneHour": "1 hour",
+  "@autoLockOneHour": {
+    "description": "Auto-lock delay choice."
+  },
+  "autoLockMenuValue": "Auto-lock · {value}",
+  "@autoLockMenuValue": {
+    "description": "Settings menu item with the current auto-lock delay; value is a short delay name.",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "5 min"
+      }
+    }
+  },
+  "autoLockMinutesShort": "{count} min",
+  "@autoLockMinutesShort": {
+    "description": "Short auto-lock delay in the settings menu.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "autoLockOneHourShort": "1 h",
+  "@autoLockOneHourShort": {
+    "description": "Short auto-lock delay in the settings menu."
+  },
+  "autoLockDescription": "Lock all files after Satchel has been in the background for:",
+  "@autoLockDescription": {
+    "description": "Explains the auto-lock choices above the list."
+  },
+  "autoLockNever": "Never",
+  "@autoLockNever": {
+    "description": "Auto-lock choice that never locks files when the app is in the background."
   },
   "googleAccountsTitle": "Google accounts",
   "@googleAccountsTitle": {

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel/src/files/files_pane.dart';
 import 'package:satchel/src/navigation/app_location.dart';
 import 'package:satchel/src/navigation/app_shell.dart';
+import 'package:satchel/src/settings/auto_lock_settings.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
@@ -59,10 +60,87 @@ void main() {
     expect(find.text('Add storage'), findsOneWidget);
   });
 
+  group('auto-lock setting', () {
+    late MemoryAutoLockStore autoLock;
+
+    Future<void> pump(WidgetTester tester) async {
+      autoLock = MemoryAutoLockStore();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...storageOverrides(
+              platform: StoragePlatform.linux,
+              store: store,
+              autoLock: autoLock,
+            ),
+            ...googleAccountOverrides(store: MemoryGoogleAccountStore()),
+          ],
+          child: testApp(const AppShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openPicker(WidgetTester tester, String item) async {
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(item));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows the delay and changes it in a dialog', (tester) async {
+      await pump(tester);
+
+      await openPicker(tester, 'Auto-lock · 5 min');
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(
+          'Lock all files after Satchel has been in the background for:',
+        ),
+        findsOneWidget,
+      );
+      final radios = tester.widget<RadioGroup<AutoLockDelay>>(
+        find.byType(RadioGroup<AutoLockDelay>),
+      );
+      expect(radios.groupValue, AutoLockDelay.fiveMinutes);
+      for (final label in ['1 minute', '30 minutes', '1 hour', 'Never']) {
+        expect(find.text(label), findsOneWidget);
+      }
+
+      await tester.tap(find.text('15 minutes'));
+      await tester.pumpAndSettle();
+
+      expect(autoLock.delay, AutoLockDelay.fifteenMinutes);
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('Auto-lock · 15 min'), findsOneWidget);
+    });
+
+    testWidgets('uses a bottom sheet on compact screens', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pump(tester);
+
+      await openPicker(tester, 'Auto-lock · 5 min');
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      await tester.tap(find.text('Never'));
+      await tester.pumpAndSettle();
+
+      expect(autoLock.delay, AutoLockDelay.never);
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+  });
+
   testWidgets('opens Google account management from settings', (tester) async {
     await pumpStorages(tester, StoragePlatform.linux);
 
-    await tester.tap(find.byTooltip('Accounts and settings'));
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(MenuItemButton, 'Google accounts'));
     await tester.pumpAndSettle();
 
     expect(find.text('Google accounts'), findsOneWidget);
@@ -79,6 +157,40 @@ void main() {
     expect(find.text('This browser'), findsOneWidget);
     expect(find.byTooltip('More actions'), findsNothing);
     expect(find.text('Add storage'), findsNothing);
+  });
+
+  testWidgets('app bar actions line up with the tiles trailing icons', (
+    tester,
+  ) async {
+    double centerX(Finder finder) => tester.getCenter(finder.first).dx;
+
+    store.configs = [directoryConfig('a', '/x', name: 'Personal')];
+    await pumpStorages(tester, StoragePlatform.linux);
+    expect(
+      centerX(find.byIcon(Icons.more_vert)),
+      centerX(find.byIcon(Icons.settings_outlined)),
+    );
+    // Titles and tiles start 16 from the edge.
+    expect(tester.getTopLeft(find.text('Satchel')).dx, 16);
+    expect(
+      tester
+          .getTopLeft(
+            find
+                .descendant(
+                  of: find.byType(ListTile),
+                  matching: find.byType(Icon),
+                )
+                .first,
+          )
+          .dx,
+      16,
+    );
+
+    await pumpStorages(tester, StoragePlatform.web);
+    expect(
+      centerX(find.byIcon(Icons.chevron_right)),
+      centerX(find.byIcon(Icons.settings_outlined)),
+    );
   });
 
   testWidgets('lists configured folders with their location', (tester) async {

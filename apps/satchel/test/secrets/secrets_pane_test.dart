@@ -123,6 +123,41 @@ void main() {
     expect(find.text('No secrets in this file yet'), findsOneWidget);
   });
 
+  testWidgets('the Lock button locks the file', (tester) async {
+    await pumpPane(tester, secrets: _secrets);
+    await unlockWith(tester, 'hunter22');
+
+    await tester.tap(find.byTooltip('Lock'));
+    await tester.pumpAndSettle();
+
+    expect(isUnlocked(), isFalse);
+    expect(find.text(lockedMessage), findsOneWidget);
+  });
+
+  testWidgets('the buttons never cover the last row', (tester) async {
+    await pumpPane(
+      tester,
+      secrets: [
+        for (var i = 0; i < 30; i++)
+          NoteSecret(info: _info('n$i', 'Note $i'), text: ''),
+      ],
+    );
+    await unlockWith(tester, 'hunter22');
+
+    await tester.drag(find.byType(ListView), const Offset(0, -10000));
+    await tester.pumpAndSettle();
+
+    final lastActions = tester.getRect(
+      find.descendant(
+        of: find.widgetWithText(ListTile, 'Note 29'),
+        matching: find.byIcon(Icons.more_vert),
+      ),
+    );
+    for (final fab in tester.widgetList(find.byType(FloatingActionButton))) {
+      expect(tester.getRect(find.byWidget(fab)).overlaps(lastActions), isFalse);
+    }
+  });
+
   testWidgets('a wrong password shows an error and stays locked', (
     tester,
   ) async {

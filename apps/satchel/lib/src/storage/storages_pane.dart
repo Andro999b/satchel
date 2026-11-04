@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 
-import '../accounts/account_management_dialog.dart';
 import '../accounts/google_accounts.dart';
 import '../navigation/app_location.dart';
+import '../settings/settings_button.dart';
+import '../widgets/fab_padding.dart';
 import 'storage_actions.dart';
 import 'storage_display.dart';
 import 'storage_providers.dart';
@@ -26,22 +27,14 @@ class StoragesPane extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.appTitle),
-        actions: [
-          IconButton(
-            tooltip: l10n.manageAccountsTooltip,
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (context) => const AccountManagementDialog(),
-            ),
-          ),
-        ],
+        actions: const [SettingsButton()],
       ),
       floatingActionButton: canAdd ? const _AddStorageButton() : null,
       body: configs.when(
         data: (configs) => configs.isEmpty
             ? Center(child: Text(l10n.noStorages))
             : ListView(
+                padding: fabListPadding,
                 children: [
                   for (final config in configs)
                     _StorageTile(config: config, open: config.id == openId),
@@ -139,7 +132,8 @@ class _StorageTile extends ConsumerWidget {
                 ),
               ),
             )
-          : const Icon(Icons.chevron_right),
+          // As wide as the actions button, so both line up.
+          : const SizedBox(width: 48, child: Icon(Icons.chevron_right)),
     );
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:satchel/src/app.dart';
 import 'package:satchel/src/l10n/l10n.dart';
 
-/// A [MaterialApp] with the app's localizations around [home].
+/// A [MaterialApp] with the app's theme and localizations around [home].
 Widget testApp(Widget home) => MaterialApp(
+  theme: satchelTheme(Brightness.light),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: home,
