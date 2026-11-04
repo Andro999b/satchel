@@ -115,10 +115,29 @@ class _StorageTile extends ConsumerWidget {
       onTap: () =>
           ref.read(currentLocationProvider.notifier).openStorage(config.id),
       trailing: config.kind.userAddable
-          ? IconButton(
-              tooltip: context.l10n.removeStorageTooltip,
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => removeStorage(context, ref, config),
+          ? Focus(
+              parentNode: FocusScope.of(context),
+              child: MenuAnchor(
+                menuChildren: [
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.edit_outlined),
+                    onPressed: () => renameStorage(context, ref, config),
+                    child: Text(context.l10n.renameStorage),
+                  ),
+                  MenuItemButton(
+                    leadingIcon: const Icon(Icons.delete_outline),
+                    onPressed: () => removeStorage(context, ref, config),
+                    child: Text(context.l10n.deleteStorage),
+                  ),
+                ],
+                builder: (context, controller, _) => IconButton(
+                  tooltip: context.l10n.storageActionsTooltip,
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () => controller.isOpen
+                      ? controller.close()
+                      : controller.open(),
+                ),
+              ),
             )
           : const Icon(Icons.chevron_right),
     );

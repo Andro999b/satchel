@@ -102,6 +102,36 @@ class StorageConfigs extends _$StorageConfigs {
     return config;
   }
 
+  /// Renames a user-added storage without changing its identity or location.
+  Future<void> rename(String id, String displayName) async {
+    final name = displayName.trim();
+    if (name.isEmpty) {
+      throw ArgumentError.value(
+        displayName,
+        'displayName',
+        'Must not be empty',
+      );
+    }
+    final store = ref.read(storageConfigStoreProvider);
+    final saved = await store.load();
+    final index = saved.indexWhere((config) => config.id == id);
+    if (index < 0 || !saved[index].kind.userAddable) {
+      throw ArgumentError.value(id, 'id', 'Not a user-added storage');
+    }
+    final config = saved[index];
+    if (config.displayName == name) return;
+    saved[index] = StorageConfig(
+      id: config.id,
+      kind: config.kind,
+      displayName: name,
+      location: config.location,
+      locationName: config.locationName,
+      accountId: config.accountId,
+    );
+    await store.save(saved);
+    state = AsyncData(_visible(saved, ref.read(storagePlatformProvider)));
+  }
+
   /// Removes the user-added storage [id]. Its files stay where they are.
   Future<void> remove(String id) async {
     final store = ref.read(storageConfigStoreProvider);

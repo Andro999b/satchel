@@ -77,7 +77,7 @@ void main() {
     await pumpStorages(tester, StoragePlatform.web);
 
     expect(find.text('This browser'), findsOneWidget);
-    expect(find.byTooltip('Remove'), findsNothing);
+    expect(find.byTooltip('More actions'), findsNothing);
     expect(find.text('Add storage'), findsNothing);
   });
 
@@ -98,7 +98,152 @@ void main() {
     expect(find.text('/home/me/vaults'), findsOneWidget);
     expect(find.text('Phone'), findsOneWidget);
     expect(find.text('primary:Documents/Vaults'), findsOneWidget);
-    expect(find.byTooltip('Remove'), findsNWidgets(2));
+    expect(find.byTooltip('More actions'), findsNWidgets(2));
+  });
+
+  for (final config in [
+    directoryConfig('a', '/x', name: 'Personal'),
+    driveConfig(
+      'a',
+      'folder',
+      accountId: 'ada',
+      name: 'Personal',
+      locationName: 'My Drive / Vaults',
+    ),
+  ]) {
+    testWidgets('${config.kind.name} has a focused rename/delete menu', (
+      tester,
+    ) async {
+      store.configs = [config];
+      await pumpStorages(tester, StoragePlatform.linux, fakeStorages: true);
+
+      final tile = find.byKey(ValueKey(config.id));
+      final anchor = find.descendant(
+        of: tile,
+        matching: find.byType(MenuAnchor),
+      );
+      final focus = tester.widget<Focus>(
+        find.ancestor(of: anchor, matching: find.byType(Focus)).first,
+      );
+      expect(focus.parentNode, FocusScope.of(tester.element(tile)));
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MenuItemButton), findsNWidgets(2));
+      expect(find.text('Rename'), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+      await tester.tap(find.text('Rename'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rename "Personal"'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Personal',
+      );
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Rename'))
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(find.byType(TextField), '  Renamed  ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ListTile, 'Renamed'), findsOneWidget);
+      expect(store.configs.single.displayName, 'Renamed');
+      expect(store.configs.single.id, config.id);
+      expect(store.configs.single.location, config.location);
+      expect(store.configs.single.locationName, config.locationName);
+      expect(store.configs.single.accountId, config.accountId);
+    });
+
+    testWidgets('deletes ${config.kind.name} only after confirmation', (
+      tester,
+    ) async {
+      store.configs = [config];
+      await pumpStorages(tester, StoragePlatform.linux, fakeStorages: true);
+
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Satchel will forget this storage. Files in it are not deleted.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(store.configs, [config]);
+
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+      await tester.pumpAndSettle();
+      expect(store.configs, isEmpty);
+    });
+  }
+
+  testWidgets('cancelling rename keeps the storage name', (tester) async {
+    store.configs = [directoryConfig('a', '/x', name: 'Personal')];
+    await pumpStorages(tester, StoragePlatform.linux);
+
+    await tester.tap(find.byTooltip('More actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Changed');
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(store.configs.single.displayName, 'Personal');
+  });
+
+  testWidgets('reports a failed removal and keeps the storage', (tester) async {
+    store.configs = [directoryConfig('a', '/x', name: 'Personal')];
+    store.saveError = Exception('save failed');
+    await pumpStorages(tester, StoragePlatform.linux);
+
+    await tester.tap(find.byTooltip('More actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not remove the storage. Try again.'),
+      findsOneWidget,
+    );
+    expect(store.configs.single.displayName, 'Personal');
+    expect(picker.released, isEmpty);
+  });
+
+  testWidgets('reports a failed rename and keeps the original name', (
+    tester,
+  ) async {
+    store.configs = [directoryConfig('a', '/x', name: 'Personal')];
+    store.saveError = Exception('save failed');
+    await pumpStorages(tester, StoragePlatform.linux);
+
+    await tester.tap(find.byTooltip('More actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Changed');
+    await tester.tap(find.widgetWithText(FilledButton, 'Rename'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not rename the storage. Try again.'),
+      findsOneWidget,
+    );
+    expect(store.configs.single.displayName, 'Personal');
   });
 
   testWidgets('opens the files of a storage', (tester) async {
@@ -201,14 +346,18 @@ void main() {
     store.configs = [directoryConfig('a', '/x', name: 'Old')];
     await pumpStorages(tester, StoragePlatform.android);
 
-    await tester.tap(find.byTooltip('Remove'));
+    await tester.tap(find.byTooltip('More actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(find.text('Remove "Old"?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(store.configs, hasLength(1));
 
-    await tester.tap(find.byTooltip('Remove'));
+    await tester.tap(find.byTooltip('More actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
     await tester.pumpAndSettle();

@@ -219,6 +219,68 @@ void main() {
     expect(store.configs, hasLength(1));
   });
 
+  test(
+    'rename persists and preserves storage identity',
+    () async {
+      store.configs = [
+        directoryConfig('a', '/a'),
+        driveConfig(
+          'd',
+          'folder',
+          accountId: 'ada',
+          locationName: 'My Drive / Vaults',
+        ),
+      ];
+      final c = container(StoragePlatform.linux);
+      final notifier = c.read(storageConfigsProvider.notifier);
+
+      for (final original in [...store.configs]) {
+        await notifier.rename(original.id, '  Renamed ${original.id}  ');
+        final renamed = (await c.read(storageConfigsProvider.future))
+            .singleWhere((config) => config.id == original.id);
+        expect(renamed.toJson(), {
+          ...original.toJson(),
+          'displayName': 'Renamed ${original.id}',
+        });
+      }
+
+      c.invalidate(storageConfigsProvider);
+      expect(await c.read(storageConfigsProvider.future), store.configs);
+      expect(picker.released, isEmpty);
+    },
+  );
+
+  test('rename rejects empty names, missing and built-in storages', () async {
+    store.configs = [directoryConfig('a', '/a')];
+    final notifier = container(StoragePlatform.web)
+        .read(storageConfigsProvider.notifier);
+
+    await expectLater(notifier.rename('a', '  '), throwsArgumentError);
+    await expectLater(notifier.rename('missing', 'New'), throwsArgumentError);
+    await expectLater(
+      notifier.rename(browserStorageId, 'New'),
+      throwsArgumentError,
+    );
+    expect(store.configs.single.displayName, 'a');
+  });
+
+  test(
+    'failed rename leaves published and persisted configs unchanged',
+    () async {
+      store.configs = [directoryConfig('a', '/a')];
+      final c = container(StoragePlatform.linux);
+      final original = await c.read(storageConfigsProvider.future);
+      store.saveError = Exception('save failed');
+
+      await expectLater(
+        c.read(storageConfigsProvider.notifier).rename('a', 'New'),
+        throwsException,
+      );
+      expect(await c.read(storageConfigsProvider.future), original);
+      expect(store.configs, original);
+    },
+  );
+
   test('removing forgets the storage and releases its folder', () async {
     store.configs = [directoryConfig('a', '/a'), directoryConfig('b', '/b')];
     final c = container(StoragePlatform.android);

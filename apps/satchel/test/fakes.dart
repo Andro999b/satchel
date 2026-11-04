@@ -14,12 +14,14 @@ final class MemoryStorageConfigStore implements StorageConfigStore {
     : configs = [...configs];
 
   List<StorageConfig> configs;
+  Object? saveError;
 
   @override
   Future<List<StorageConfig>> load() async => [...configs];
 
   @override
   Future<void> save(List<StorageConfig> configs) async {
+    if (saveError case final error?) throw error;
     this.configs = [...configs];
   }
 }

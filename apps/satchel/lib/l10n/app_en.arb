@@ -228,9 +228,35 @@
   "@storagesLoadError": {
     "description": "Shown when the saved storages could not be read."
   },
-  "removeStorageTooltip": "Remove",
-  "@removeStorageTooltip": {
-    "description": "Tooltip of the button that removes a storage from the app."
+  "storageActionsTooltip": "More actions",
+  "@storageActionsTooltip": {
+    "description": "Tooltip of the button that opens the actions menu for a user-added storage."
+  },
+  "renameStorage": "Rename",
+  "@renameStorage": {
+    "description": "Menu item and confirmation button that rename a configured storage."
+  },
+  "renameStorageTitle": "Rename \"{name}\"",
+  "@renameStorageTitle": {
+    "description": "Title of the dialog that renames a configured storage.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "renameStorageError": "Could not rename the storage. Try again.",
+  "@renameStorageError": {
+    "description": "Shown when saving a storage's new display name failed."
+  },
+  "deleteStorage": "Delete",
+  "@deleteStorage": {
+    "description": "Menu item that removes a storage from Satchel without deleting its files."
+  },
+  "removeStorageError": "Could not remove the storage. Try again.",
+  "@removeStorageError": {
+    "description": "Shown when removing a configured storage failed."
   },
   "folderAlreadyAdded": "This folder is already added",
   "@folderAlreadyAdded": {

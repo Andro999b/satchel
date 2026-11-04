@@ -59,16 +59,20 @@ Future<void> _addDirectory(BuildContext context, WidgetRef ref) async {
   }
 }
 
-/// Asks for the name of a new storage. Pops the trimmed name, or `null`.
+/// Asks for a storage name. Pops the trimmed name, or `null`.
 class StorageNameDialog extends StatefulWidget {
   const StorageNameDialog({
     super.key,
     required this.initialName,
     required this.location,
+    this.title,
+    this.confirmLabel,
   });
 
   final String initialName;
   final String location;
+  final String? title;
+  final String? confirmLabel;
 
   @override
   State<StorageNameDialog> createState() => _StorageNameDialogState();
@@ -92,7 +96,7 @@ class _StorageNameDialogState extends State<StorageNameDialog> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
-      title: Text(l10n.addFolderTitle),
+      title: Text(widget.title ?? l10n.addFolderTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,11 +120,37 @@ class _StorageNameDialogState extends State<StorageNameDialog> {
           listenable: _controller,
           builder: (context, _) => FilledButton(
             onPressed: _controller.text.trim().isEmpty ? null : _submit,
-            child: Text(l10n.addFolderConfirm),
+            child: Text(widget.confirmLabel ?? l10n.addFolderConfirm),
           ),
         ),
       ],
     );
+  }
+}
+
+/// Changes only the storage's display name, not its folder or files.
+Future<void> renameStorage(
+  BuildContext context,
+  WidgetRef ref,
+  StorageConfig config,
+) async {
+  final notifier = ref.read(storageConfigsProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  final name = await showDialog<String>(
+    context: context,
+    builder: (context) => StorageNameDialog(
+      initialName: config.displayName,
+      location: storageLocationText(config) ?? '',
+      title: l10n.renameStorageTitle(storageName(l10n, config)),
+      confirmLabel: l10n.renameStorage,
+    ),
+  );
+  if (name == null) return;
+  try {
+    await notifier.rename(config.id, name);
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.renameStorageError)));
   }
 }
 
@@ -130,6 +160,9 @@ Future<void> removeStorage(
   WidgetRef ref,
   StorageConfig config,
 ) async {
+  final notifier = ref.read(storageConfigsProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -150,6 +183,10 @@ Future<void> removeStorage(
     ),
   );
   if (confirmed ?? false) {
-    await ref.read(storageConfigsProvider.notifier).remove(config.id);
+    try {
+      await notifier.remove(config.id);
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.removeStorageError)));
+    }
   }
 }
