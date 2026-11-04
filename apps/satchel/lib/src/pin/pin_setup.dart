@@ -5,6 +5,7 @@ import 'package:satchel_core/satchel_core.dart';
 
 import '../l10n/l10n.dart';
 import '../vault/unlocked_vaults.dart';
+import 'biometric_store.dart';
 import 'pin_unlock.dart';
 
 /// Asks for a new PIN for the unlocked vault [vault] named [name] and saves
@@ -41,6 +42,52 @@ Future<void> removePin(
     messenger.showSnackBar(SnackBar(content: Text(l10n.pinRemoved(name))));
   } catch (_) {
     messenger.showSnackBar(SnackBar(content: Text(l10n.pinRemoveError)));
+  }
+}
+
+/// Turns biometric unlock on or off for the unlocked vault [vault] named
+/// [name], which has a PIN, reporting the outcome in a snack bar. Turning it
+/// on shows the biometric prompt; dismissing it changes nothing.
+Future<void> setBiometricUnlock(
+  BuildContext context,
+  WidgetRef ref,
+  VaultRef vault, {
+  required String name,
+  required bool enabled,
+}) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  final notifier = ref.read(pinUnlockProvider.notifier);
+  try {
+    if (enabled) {
+      await notifier.enableBiometric(
+        vault,
+        BiometricPromptText(title: l10n.turnOnBiometric, cancel: l10n.cancel),
+      );
+    } else {
+      await notifier.disableBiometric(vault);
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled ? l10n.biometricEnabled(name) : l10n.biometricDisabled(name),
+        ),
+      ),
+    );
+  } on BiometricCancelledException {
+    // The user changed their mind.
+  } on PinRemovedException {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.unlockPinPasswordChanged)),
+    );
+  } catch (_) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled ? l10n.biometricEnableError : l10n.biometricDisableError,
+        ),
+      ),
+    );
   }
 }
 

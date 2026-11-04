@@ -1543,5 +1543,71 @@
         "example": "Personal"
       }
     }
+  },
+  "turnOnBiometric": "Turn on biometric unlock",
+  "@turnOnBiometric": {
+    "description": "Menu item, and biometric prompt title, that lets a vault file with a PIN also be unlocked with biometrics."
+  },
+  "turnOffBiometric": "Turn off biometric unlock",
+  "@turnOffBiometric": {
+    "description": "Menu item that turns off biometric unlock for a vault file."
+  },
+  "biometricEnabled": "You can now unlock \"{name}\" with biometrics",
+  "@biometricEnabled": {
+    "description": "Shown after biometric unlock was turned on for a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "biometricDisabled": "Turned off biometric unlock for \"{name}\"",
+  "@biometricDisabled": {
+    "description": "Shown after biometric unlock was turned off for a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "biometricEnableError": "Could not turn on biometric unlock. Try again.",
+  "@biometricEnableError": {
+    "description": "Shown when turning on biometric unlock failed."
+  },
+  "biometricDisableError": "Could not turn off biometric unlock. Try again.",
+  "@biometricDisableError": {
+    "description": "Shown when turning off biometric unlock failed."
+  },
+  "biometricPromptUnlock": "Unlock \"{name}\"",
+  "@biometricPromptUnlock": {
+    "description": "Title of the system biometric prompt that unlocks a vault file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Personal"
+      }
+    }
+  },
+  "biometricPromptUsePin": "Use PIN",
+  "@biometricPromptUsePin": {
+    "description": "Dismiss button of the biometric unlock prompt; the PIN field stays."
+  },
+  "unlockWithBiometric": "Use biometrics",
+  "@unlockWithBiometric": {
+    "description": "Button of the unlock form that shows the biometric prompt."
+  },
+  "filePinBiometricEnabled": "PIN and biometric unlock",
+  "@filePinBiometricEnabled": {
+    "description": "Shown under a vault file that can be unlocked with a PIN or biometrics."
+  },
+  "unlockBiometricRemoved": "Biometrics on this device changed, so biometric unlock was turned off. Enter the PIN.",
+  "@unlockBiometricRemoved": {
+    "description": "Unlock message when the biometric key was invalidated, e.g. by enrolling a new fingerprint."
+  },
+  "unlockBiometricFailed": "Biometric unlock didn't work. Enter the PIN.",
+  "@unlockBiometricFailed": {
+    "description": "Unlock message when biometric authentication failed or is locked out."
   }
 }

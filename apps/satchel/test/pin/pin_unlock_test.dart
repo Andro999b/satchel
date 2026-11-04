@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel/src/files/vault_file.dart';
 import 'package:satchel/src/files/vault_files_providers.dart';
+import 'package:satchel/src/pin/biometric_store.dart';
 import 'package:satchel/src/pin/pin_unlock.dart';
 import 'package:satchel/src/storage/storage_providers.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
@@ -15,9 +16,11 @@ void main() {
   late FakeStorageProvider storage;
   late FakeStorageProvider other;
   late MemoryPinStore pins;
+  late FakeBiometricStore biometrics;
   late ProviderContainer container;
   const a = VaultRef('s', 'a.satchel');
   const b = VaultRef('s', 'b.satchel');
+  const prompt = BiometricPromptText(title: 'Unlock', cancel: 'Use PIN');
 
   ProviderContainer create({MemoryPinStore? pinStore}) {
     final container = ProviderContainer(
@@ -29,6 +32,7 @@ void main() {
             directoryConfig('t', '/t'),
           ]),
           pins: pinStore,
+          biometrics: pinStore == null ? null : biometrics,
         ),
         storageProvidersProvider.overrideWith((ref) async => [storage, other]),
         appClockProvider.overrideWithValue(Clock.fixed(DateTime.utc(2026))),
@@ -47,12 +51,20 @@ void main() {
     await putVault(storage, a.path, 'password-a');
     await putVault(storage, b.path, 'password-b');
     pins = MemoryPinStore();
+    biometrics = FakeBiometricStore();
     container = create(pinStore: pins);
   });
 
   UnlockedVaults vaults() => container.read(unlockedVaultsProvider.notifier);
   PinUnlock pinUnlock() => container.read(pinUnlockProvider.notifier);
-  Future<Set<VaultRef>> enabled() => container.read(pinUnlockProvider.future);
+  Future<Set<VaultRef>> enabled() async =>
+      (await container.read(pinUnlockProvider.future)).keys.toSet();
+  Future<bool?> biometricOn(VaultRef vault) async =>
+      switch ((await container.read(pinUnlockProvider.future))[vault]) {
+        null || QuickUnlock.none => null,
+        QuickUnlock.pin => false,
+        QuickUnlock.pinAndBiometric => true,
+      };
 
   Future<void> enable(VaultRef vault, String pin) async {
     await vaults().unlock(vault, 'password-${vault.path[0]}');
@@ -259,5 +271,152 @@ void main() {
 
     expect(await enabled(), {const VaultRef('t', 'x.satchel')});
     expect(pins.records.keys, [const VaultRef('t', 'x.satchel')]);
+  });
+
+  group('biometric unlock', () {
+    Future<void> enableBoth(VaultRef vault) async {
+      await enable(vault, '123456');
+      await pinUnlock().enableBiometric(vault, prompt);
+    }
+
+    test('stores the key behind biometrics and unlocks with it', () async {
+      await enableBoth(a);
+      final payload = container.read(unlockedVaultsProvider)[a]!.payload;
+
+      expect(await biometricOn(a), isTrue);
+      final id = pins.records[a]!.biometricId!;
+      expect(
+        biometrics.entries[id],
+        container.read(unlockedVaultsProvider)[a]!.key.bytes,
+      );
+      vaults().lock(a);
+
+      await pinUnlock().unlockWithBiometric(a, prompt);
+
+      expect(
+        container.read(unlockedVaultsProvider)[a]!.payload.toJson(),
+        payload.toJson(),
+      );
+      expect(biometrics.prompts, ['Unlock', 'Unlock']);
+    });
+
+    test('needs a PIN and an unlocked file', () async {
+      await vaults().unlock(a, 'password-a');
+      await expectLater(
+        pinUnlock().enableBiometric(a, prompt),
+        throwsStateError,
+      );
+      await pinUnlock().enable(a, '123456');
+      vaults().lock(a);
+      await expectLater(
+        pinUnlock().enableBiometric(a, prompt),
+        throwsStateError,
+      );
+      expect(biometrics.entries, isEmpty);
+    });
+
+    test('a dismissed prompt changes nothing', () async {
+      await enable(a, '123456');
+      biometrics.error = const BiometricCancelledException();
+
+      await expectLater(
+        pinUnlock().enableBiometric(a, prompt),
+        throwsA(isA<BiometricCancelledException>()),
+      );
+      expect(await biometricOn(a), isFalse);
+
+      biometrics.error = null;
+      await pinUnlock().enableBiometric(a, prompt);
+      vaults().lock(a);
+      biometrics.error = const BiometricCancelledException();
+      await expectLater(
+        pinUnlock().unlockWithBiometric(a, prompt),
+        throwsA(isA<BiometricCancelledException>()),
+      );
+      expect(container.read(unlockedVaultsProvider), isEmpty);
+      expect(await biometricOn(a), isTrue);
+      expect(pins.records[a]!.failedAttempts, 0);
+    });
+
+    test('new biometrics on the device turn it off, the PIN stays', () async {
+      await enableBoth(a);
+      vaults().lock(a);
+      biometrics.invalidate();
+
+      await expectLater(
+        pinUnlock().unlockWithBiometric(a, prompt),
+        throwsA(isA<BiometricRemovedException>()),
+      );
+
+      expect(await biometricOn(a), isFalse);
+      expect(pins.records[a]!.biometricId, isNull);
+      await pinUnlock().unlock(a, '123456');
+    });
+
+    test('a password changed elsewhere removes PIN and biometrics', () async {
+      await enableBoth(a);
+      vaults().lock(a);
+      storage.blobs.remove(a.path);
+      await putVault(storage, a.path, 'new-password');
+
+      await expectLater(
+        pinUnlock().unlockWithBiometric(a, prompt),
+        throwsA(
+          isA<PinRemovedException>().having(
+            (e) => e.reason,
+            '',
+            PinRemovedReason.passwordChanged,
+          ),
+        ),
+      );
+      expect(pins.records, isEmpty);
+      expect(biometrics.entries, isEmpty);
+    });
+
+    test('turning it off keeps the PIN', () async {
+      await enableBoth(a);
+
+      await pinUnlock().disableBiometric(a);
+
+      expect(biometrics.entries, isEmpty);
+      expect(await biometricOn(a), isFalse);
+      expect(pins.records[a]!.biometricId, isNull);
+    });
+
+    test('removing the PIN removes biometrics too', () async {
+      await enableBoth(a);
+      await enableBoth(b);
+
+      await pinUnlock().disable(a);
+
+      expect(biometrics.entries.keys, [pins.records[b]!.biometricId]);
+      expect(await enabled(), {b});
+    });
+
+    test('too many wrong PINs remove biometrics too', () async {
+      await enableBoth(a);
+      vaults().lock(a);
+
+      for (var i = 0; i < maxPinAttempts; i++) {
+        await expectLater(pinUnlock().unlock(a, '000000'), throwsException);
+      }
+
+      expect(pins.records, isEmpty);
+      expect(biometrics.entries, isEmpty);
+    });
+
+    test('changing the PIN or renaming keeps biometrics', () async {
+      await enableBoth(a);
+
+      await pinUnlock().enable(a, '654321');
+      expect(await biometricOn(a), isTrue);
+      await vaults().rename(a, 'Renamed');
+
+      const renamed = VaultRef('s', 'Renamed.satchel');
+      expect(await biometricOn(renamed), isTrue);
+      vaults().lock(renamed);
+      await pinUnlock().unlockWithBiometric(renamed, prompt);
+      expect(container.read(unlockedVaultsProvider), contains(renamed));
+    });
   });
 }

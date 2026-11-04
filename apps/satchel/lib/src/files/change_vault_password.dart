@@ -14,12 +14,10 @@ import 'vault_file_fields.dart';
 Future<void> changeVaultPassword(BuildContext context, VaultFile file) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
-  final hadPin =
-      ProviderScope.containerOf(context, listen: false)
-          .read(pinUnlockProvider)
-          .value
-          ?.contains(VaultRef(file.storageId, file.path)) ??
-      false;
+  final hadPin = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(quickUnlockProvider(VaultRef(file.storageId, file.path))).hasPin;
   final changed = await showDialog<bool>(
     context: context,
     barrierDismissible: false,

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:satchel/src/accounts/google_account_store.dart';
 import 'package:satchel/src/accounts/google_accounts.dart';
+import 'package:satchel/src/pin/biometric_store.dart';
 import 'package:satchel/src/pin/pin_store.dart';
 import 'package:satchel/src/pin/pin_unlock.dart';
 import 'package:satchel/src/vault/unlocked_vaults.dart';
@@ -108,18 +109,58 @@ StorageConfig driveConfig(
 );
 
 /// Overrides for a fake platform, preference store and picker. PIN unlock is
-/// off unless [pins] is given.
+/// off unless [pins] is given, and biometric unlock unless [biometrics] is.
 List<Override> storageOverrides({
   required StoragePlatform? platform,
   required StorageConfigStore store,
   DirectoryPicker? picker,
   PinStore? pins,
+  BiometricStore? biometrics,
 }) => [
   storagePlatformProvider.overrideWithValue(platform),
   storageConfigStoreProvider.overrideWithValue(store),
   directoryPickerProvider.overrideWithValue(picker ?? FakeDirectoryPicker()),
   pinStoreProvider.overrideWithValue(pins),
+  biometricStoreProvider.overrideWithValue(biometrics),
 ];
+
+/// [BiometricStore] that "authenticates" without a prompt.
+final class FakeBiometricStore implements BiometricStore {
+  bool available = true;
+  final entries = <String, Uint8List>{};
+  final prompts = <String>[];
+
+  /// Thrown by the next prompts, e.g. [BiometricCancelledException].
+  Object? error;
+
+  @override
+  Future<bool> isAvailable() async => available;
+
+  @override
+  Future<void> write(
+    String id,
+    Uint8List key,
+    BiometricPromptText prompt,
+  ) async {
+    prompts.add(prompt.title);
+    if (error case final error?) throw error;
+    entries[id] = Uint8List.fromList(key);
+  }
+
+  @override
+  Future<Uint8List?> read(String id, BiometricPromptText prompt) async {
+    prompts.add(prompt.title);
+    if (error case final error?) throw error;
+    final key = entries[id];
+    return key == null ? null : Uint8List.fromList(key);
+  }
+
+  @override
+  Future<void> delete(String id) async => entries.remove(id);
+
+  /// Like enrolling new biometrics: the Keystore key and its data are gone.
+  void invalidate() => entries.clear();
+}
 
 final class MemoryPinStore implements PinStore {
   final records = <VaultRef, PinRecord>{};

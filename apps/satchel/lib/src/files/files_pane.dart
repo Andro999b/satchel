@@ -169,9 +169,7 @@ class _VaultFileTile extends ConsumerWidget {
     final sessionRevision = ref.watch(
       unlockedVaultsProvider.select((vaults) => vaults[vaultRef]?.revision),
     );
-    final hasPin = ref.watch(
-      pinUnlockProvider.select((v) => v.value?.contains(vaultRef) ?? false),
-    );
+    final quickUnlock = ref.watch(quickUnlockProvider(vaultRef));
     final unlocked = sessionRevision != null;
     // Act on exactly the version the user unlocked, or else the listed one.
     final current = unlocked
@@ -194,7 +192,11 @@ class _VaultFileTile extends ConsumerWidget {
         ),
       ),
       title: Text(file.name),
-      subtitle: hasPin ? Text(l10n.filePinEnabled) : null,
+      subtitle: switch (quickUnlock) {
+        QuickUnlock.none => null,
+        QuickUnlock.pin => Text(l10n.filePinEnabled),
+        QuickUnlock.pinAndBiometric => Text(l10n.filePinBiometricEnabled),
+      },
       trailing: Focus(
         parentNode: FocusScope.of(context),
         child: MenuAnchor(

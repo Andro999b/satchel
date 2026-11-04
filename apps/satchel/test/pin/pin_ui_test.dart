@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:satchel/src/files/files_pane.dart';
 import 'package:satchel/src/navigation/app_location.dart';
+import 'package:satchel/src/pin/biometric_store.dart';
 import 'package:satchel/src/pin/pin_store.dart';
 import 'package:satchel/src/pin/pin_unlock.dart';
 import 'package:satchel/src/secrets/secrets_pane.dart';
@@ -18,18 +20,22 @@ import '../test_app.dart';
 void main() {
   late FakeStorageProvider storage;
   late MemoryPinStore pins;
+  late FakeBiometricStore biometrics;
   late ProviderContainer container;
   const vault = VaultRef('s', 'personal.satchel');
 
-  /// Pumps [child]. With [withPin], the file has the PIN 123456.
+  /// Pumps [child]. With [withPin], the file has the PIN 123456, and with
+  /// [withBiometric] also biometric unlock.
   Future<void> pump(
     WidgetTester tester,
     Widget child, {
     StoragePlatform platform = StoragePlatform.android,
     bool withPin = false,
+    bool withBiometric = false,
   }) async {
     storage = FakeStorageProvider(id: 's');
     pins = MemoryPinStore();
+    biometrics = FakeBiometricStore();
     await tester.runAsync(() async {
       await putVault(storage, vault.path, 'hunter22');
       if (!withPin) return;
@@ -44,15 +50,23 @@ void main() {
         memoryKiB: 64,
         iterations: 1,
       );
+      if (withBiometric) {
+        biometrics.entries['bio'] = Uint8List.fromList(opened.key.bytes);
+      }
       opened.key.destroy();
-      pins.records[vault] = PinRecord(wrappedKey: wrapped.encode());
+      pins.records[vault] = PinRecord(
+        wrappedKey: wrapped.encode(),
+        biometricId: withBiometric ? 'bio' : null,
+      );
     });
+    final android = platform == StoragePlatform.android;
     container = ProviderContainer(
       overrides: [
         ...storageOverrides(
           platform: platform,
           store: MemoryStorageConfigStore([directoryConfig('s', '/s')]),
-          pins: platform == StoragePlatform.android ? pins : null,
+          pins: android ? pins : null,
+          biometrics: android ? biometrics : null,
         ),
         storageProvidersProvider.overrideWith((ref) async => [storage]),
         vaultCryptoProvider.overrideWithValue(
@@ -165,6 +179,51 @@ void main() {
       expect(find.text('Removed the PIN of "personal"'), findsOneWidget);
       expect(find.text('PIN unlock'), findsNothing);
     });
+
+    testWidgets('turns biometric unlock on and off', (tester) async {
+      await pump(tester, panes, withPin: true);
+      await unlock(tester);
+
+      await openMenu(tester);
+      await tester.tap(menuItem('Turn on biometric unlock'));
+      await tester.pumpAndSettle();
+
+      expect(biometrics.prompts, ['Turn on biometric unlock']);
+      expect(biometrics.entries, hasLength(1));
+      expect(
+        find.text('You can now unlock "personal" with biometrics'),
+        findsOneWidget,
+      );
+      expect(find.text('PIN and biometric unlock'), findsOneWidget);
+
+      await openMenu(tester);
+      await tester.tap(menuItem('Turn off biometric unlock'));
+      await tester.pumpAndSettle();
+
+      expect(biometrics.entries, isEmpty);
+      expect(find.text('PIN unlock'), findsOneWidget);
+    });
+
+    testWidgets('offers biometrics only with a PIN', (tester) async {
+      await pump(tester, panes);
+      await unlock(tester);
+
+      await openMenu(tester);
+
+      expect(menuItem('Set up PIN'), findsOneWidget);
+      expect(menuItem('Turn on biometric unlock'), findsNothing);
+    });
+
+    testWidgets('offers biometrics only when enrolled', (tester) async {
+      await pump(tester, panes, withPin: true);
+      biometrics.available = false;
+      await unlock(tester);
+
+      await openMenu(tester);
+
+      expect(menuItem('Change PIN'), findsOneWidget);
+      expect(menuItem('Turn on biometric unlock'), findsNothing);
+    });
   });
 
   group('unlock form', () {
@@ -181,6 +240,7 @@ void main() {
     testWidgets('asks for the PIN of a file that has one', (tester) async {
       await pump(tester, pane, withPin: true);
 
+      expect(find.text('Use biometrics'), findsNothing);
       expect(
         find.text('This file is locked. Enter its PIN to open it.'),
         findsOneWidget,
@@ -192,6 +252,47 @@ void main() {
 
       await enterPin(tester, '123456');
 
+      expect(isUnlocked(), isTrue);
+    });
+
+    testWidgets('unlocks with biometrics', (tester) async {
+      await pump(tester, pane, withPin: true, withBiometric: true);
+
+      await tester.tap(find.text('Use biometrics'));
+      await settleCrypto(tester, find.text('Unlocking…'));
+
+      expect(isUnlocked(), isTrue);
+      expect(biometrics.prompts, ['Unlock "personal"']);
+    });
+
+    testWidgets('a dismissed prompt leaves the PIN field', (tester) async {
+      await pump(tester, pane, withPin: true, withBiometric: true);
+      biometrics.error = const BiometricCancelledException();
+
+      await tester.tap(find.text('Use biometrics'));
+      await settleCrypto(tester, find.text('Unlocking…'));
+
+      expect(isUnlocked(), isFalse);
+      expect(find.byKey(const Key('unlockPin')), findsOneWidget);
+      expect(find.textContaining('Biometric'), findsNothing);
+    });
+
+    testWidgets('explains when biometrics were turned off', (tester) async {
+      await pump(tester, pane, withPin: true, withBiometric: true);
+      biometrics.invalidate();
+
+      await tester.tap(find.text('Use biometrics'));
+      await settleCrypto(tester, find.text('Unlocking…'));
+
+      expect(
+        find.text(
+          'Biometrics on this device changed, so biometric unlock was turned '
+          'off. Enter the PIN.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Use biometrics'), findsNothing);
+      await enterPin(tester, '123456');
       expect(isUnlocked(), isTrue);
     });
 

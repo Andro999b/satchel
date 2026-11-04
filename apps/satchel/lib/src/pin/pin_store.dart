@@ -7,19 +7,35 @@ import 'package:satchel_core/satchel_core.dart';
 import '../vault/unlocked_vaults.dart';
 
 /// The PIN data of one vault file: its key wrapped under the PIN
-/// ([PinWrappedKey.encode]) and the failed attempts since the last unlock.
+/// ([PinWrappedKey.encode]), the failed attempts since the last unlock, and
+/// the id of its entry in the `BiometricStore` if biometric unlock is on.
 @immutable
 final class PinRecord {
-  const PinRecord({required this.wrappedKey, this.failedAttempts = 0});
+  const PinRecord({
+    required this.wrappedKey,
+    this.failedAttempts = 0,
+    this.biometricId,
+  });
 
   final String wrappedKey;
   final int failedAttempts;
+  final String? biometricId;
 
-  PinRecord withFailedAttempts(int failedAttempts) =>
-      PinRecord(wrappedKey: wrappedKey, failedAttempts: failedAttempts);
+  PinRecord withFailedAttempts(int failedAttempts) => PinRecord(
+    wrappedKey: wrappedKey,
+    failedAttempts: failedAttempts,
+    biometricId: biometricId,
+  );
+
+  PinRecord withBiometricId(String? biometricId) => PinRecord(
+    wrappedKey: wrappedKey,
+    failedAttempts: failedAttempts,
+    biometricId: biometricId,
+  );
 
   @override
-  String toString() => 'PinRecord(<redacted>, $failedAttempts)';
+  String toString() =>
+      'PinRecord(<redacted>, $failedAttempts, biometric: ${biometricId != null})';
 }
 
 /// Persists PIN records and the device secret in platform secure storage.
@@ -83,6 +99,7 @@ final class SecurePinStore implements PinStore {
       'path': vault.path,
       'wrappedKey': record.wrappedKey,
       'failedAttempts': record.failedAttempts,
+      'biometricId': ?record.biometricId,
     }),
   );
 
@@ -94,7 +111,8 @@ final class SecurePinStore implements PinStore {
 
   static (VaultRef, PinRecord)? _parse(String value) {
     try {
-      if (jsonDecode(value) case {
+      final json = jsonDecode(value);
+      if (json case {
         'storageId': final String storageId,
         'path': final String path,
         'wrappedKey': final String wrappedKey,
@@ -102,7 +120,14 @@ final class SecurePinStore implements PinStore {
       }) {
         return (
           VaultRef(storageId, path),
-          PinRecord(wrappedKey: wrappedKey, failedAttempts: failedAttempts),
+          PinRecord(
+            wrappedKey: wrappedKey,
+            failedAttempts: failedAttempts,
+            biometricId: switch (json) {
+              {'biometricId': final String id} => id,
+              _ => null,
+            },
+          ),
         );
       }
     } on FormatException {
