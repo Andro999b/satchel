@@ -1146,6 +1146,18 @@
   "@pemLabel": {
     "description": "Label of the field holding a PEM key or certificate."
   },
+  "downloadPem": "Download PEM",
+  "@downloadPem": {
+    "description": "Tooltip and confirmation button for saving a PEM document as a file."
+  },
+  "downloadPemWarning": "This PEM file is not encrypted. Anyone who can open it can read its contents. Keep it safe.",
+  "@downloadPemWarning": {
+    "description": "Warning before saving a PEM document outside the encrypted vault."
+  },
+  "downloadPrivateKeyWarning": "This PEM file contains a private key and is not encrypted. Anyone who can open it can use your private key. Keep it safe and delete it when you no longer need it.",
+  "@downloadPrivateKeyWarning": {
+    "description": "Stronger warning before saving a PEM document containing a private key."
+  },
   "pemInvalid": "Paste a PEM block starting with -----BEGIN",
   "@pemInvalid": {
     "description": "Validation error for text that is not PEM."

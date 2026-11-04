@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:satchel/src/export/export_providers.dart';
 import 'package:satchel/src/navigation/adaptive_layout.dart';
 import 'package:satchel/src/navigation/app_location.dart';
 import 'package:satchel/src/secrets/expiry_display.dart';
@@ -18,6 +21,21 @@ import 'package:satchel_storage/satchel_storage.dart';
 
 import '../fakes.dart';
 import '../test_app.dart';
+
+class _PemFileExporter implements FileExporter {
+  final delegate = FakeFileExporter();
+  Uint8List? buffer;
+
+  @override
+  Future<String?> save(
+    String fileName,
+    Uint8List bytes, {
+    required String mimeType,
+  }) {
+    buffer = bytes;
+    return delegate.save(fileName, bytes, mimeType: mimeType);
+  }
+}
 
 final _now = DateTime.utc(2026, 11, 2, 12);
 
@@ -89,10 +107,12 @@ void main() {
   late FakeStorageProvider storage;
   late ProviderContainer container;
   late List<String?> clipboard;
+  late _PemFileExporter exporter;
   const vault = VaultRef('s', 'personal.satchel');
 
   setUp(() {
     clipboard = [];
+    exporter = _PemFileExporter();
   });
 
   Future<void> pumpSecret(WidgetTester tester, Secret secret) async {
@@ -135,6 +155,7 @@ void main() {
         ),
         storageProvidersProvider.overrideWith((ref) async => [storage]),
         appClockProvider.overrideWithValue(Clock.fixed(_now)),
+        fileExporterProvider.overrideWithValue(exporter),
         secretClipboardProvider.overrideWithValue(
           SecretClipboard(clearAfter: const Duration(seconds: 2)),
         ),
@@ -284,9 +305,123 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('expiry'))).data,
       startsWith('Expires Nov 12, 2026'),
     );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('expiry'))).data,
+      endsWith('(Expires in $days days)'),
+    );
+  });
+
+  testWidgets('shows days left even outside the expiry warning window', (
+    tester,
+  ) async {
+    await pumpSecret(tester, _password);
+    final expiresAt = _now.add(const Duration(days: 90));
+    await tester.runAsync(
+      () => container
+          .read(unlockedVaultsProvider.notifier)
+          .putSecret(
+            vault,
+            _password.withInfo(
+              _password.info.copyWith(expiresAt: () => expiresAt),
+            ),
+          ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('expiryBadge')), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('expiry'))).data,
+      endsWith('(Expires in 90 days)'),
+    );
   });
 
   group('PEM', () {
+    Future<void> download(WidgetTester tester) async {
+      await tester.tap(inTile('pem', find.byTooltip('Download PEM')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> confirmDownload(WidgetTester tester) async {
+      await tester.tap(find.widgetWithText(FilledButton, 'Download PEM'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('downloads a private key only after a stronger warning', (
+      tester,
+    ) async {
+      await pumpSecret(tester, _key);
+      await download(tester);
+
+      expect(exporter.delegate.saved, isEmpty);
+      expect(find.textContaining('can use your private key'), findsOneWidget);
+      await confirmDownload(tester);
+
+      final saved = exporter.delegate.saved.single;
+      expect(saved.name, 'Server key.pem');
+      expect(saved.mimeType, 'application/x-pem-file');
+      expect(utf8.decode(saved.bytes), _key.pem);
+      expect(exporter.buffer, everyElement(0));
+      expect(find.text('Contains a private key'), findsOneWidget);
+      expect(find.text('Exported to "Server key.pem"'), findsOneWidget);
+    });
+
+    testWidgets('downloads a certificate with an unencrypted warning', (
+      tester,
+    ) async {
+      await pumpSecret(tester, _cert);
+      await download(tester);
+
+      expect(
+        find.textContaining('This PEM file is not encrypted.'),
+        findsOneWidget,
+      );
+      await confirmDownload(tester);
+
+      expect(exporter.delegate.saved.single.name, 'Certificate.pem');
+      expect(utf8.decode(exporter.delegate.saved.single.bytes), _cert.pem);
+      expect(exporter.buffer, everyElement(0));
+    });
+
+    testWidgets('cancelling the warning writes nothing', (tester) async {
+      await pumpSecret(tester, _key);
+      await download(tester);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(exporter.delegate.saved, isEmpty);
+      expect(exporter.buffer, isNull);
+    });
+
+    testWidgets('cancelling the file picker clears the plaintext buffer', (
+      tester,
+    ) async {
+      exporter.delegate.cancel = true;
+      await pumpSecret(tester, _key);
+      await download(tester);
+      await confirmDownload(tester);
+
+      expect(exporter.delegate.saved, isEmpty);
+      expect(exporter.buffer, everyElement(0));
+      expect(find.textContaining('Exported to'), findsNothing);
+      expect(find.byType(DestructiveDialog), findsNothing);
+    });
+
+    testWidgets('a failed download clears bytes and can be retried', (
+      tester,
+    ) async {
+      exporter.delegate.error = StateError('save failed');
+      await pumpSecret(tester, _key);
+      await download(tester);
+      await confirmDownload(tester);
+
+      expect(exporter.buffer, everyElement(0));
+      expect(find.text('Could not export. Try again.'), findsOneWidget);
+      exporter.delegate.error = null;
+      await download(tester);
+      await confirmDownload(tester);
+      expect(exporter.delegate.saved, hasLength(1));
+    });
+
     testWidgets('a private key is masked until revealed', (tester) async {
       await pumpSecret(tester, _key);
 
@@ -303,6 +438,10 @@ void main() {
       expect(
         tester.widget<Text>(find.byKey(const Key('expiry'))).data,
         startsWith('Expired Oct 1, 2026'),
+      );
+      expect(
+        tester.widget<Text>(find.byKey(const Key('expiry'))).data,
+        endsWith('(Expired $ago days ago)'),
       );
 
       await tester.tap(inTile('pem', find.byTooltip('Show')));

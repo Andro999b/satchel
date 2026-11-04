@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -5,10 +7,12 @@ import 'package:satchel_core/satchel_core.dart';
 import 'package:satchel_storage/satchel_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../export/export_providers.dart';
 import '../l10n/l10n.dart';
 import '../navigation/adaptive_layout.dart';
 import '../vault/unlocked_vaults.dart';
 import '../vault/vault_providers.dart';
+import '../widgets/destructive_dialog.dart';
 import '../widgets/message_view.dart';
 import 'delete_secret.dart';
 import 'expiry_display.dart';
@@ -388,6 +392,55 @@ class _PemTile extends ConsumerStatefulWidget {
 class _PemTileState extends ConsumerState<_PemTile> {
   var _revealed = false;
   var _expanded = false;
+  var _saving = false;
+
+  Future<void> _download() async {
+    if (_saving) return;
+    final secret = widget.secret;
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final exporter = ref.read(fileExporterProvider);
+    setState(() => _saving = true);
+    try {
+      await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => DestructiveDialog(
+          title: l10n.downloadPem,
+          message: secret.containsPrivateKey
+              ? l10n.downloadPrivateKeyWarning
+              : l10n.downloadPemWarning,
+          confirmLabel: l10n.downloadPem,
+          icon: Icons.warning_amber_rounded,
+          onConfirm: () async {
+            final bytes = utf8.encode(secret.pem);
+            try {
+              final name = secret.title.replaceAll(
+                RegExp(r'[<>:"/\\|?*\x00-\x1f]'),
+                '_',
+              );
+              final saved = await exporter.save(
+                '$name.pem',
+                bytes,
+                mimeType: 'application/x-pem-file',
+              );
+              if (saved != null) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.exported(saved))),
+                );
+              }
+            } catch (_) {
+              messenger.showSnackBar(SnackBar(content: Text(l10n.exportError)));
+            } finally {
+              bytes.fillRange(0, bytes.length, 0);
+            }
+          },
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +460,11 @@ class _PemTileState extends ConsumerState<_PemTile> {
             children: [
               Expanded(
                 child: Text(l10n.pemLabel, style: theme.textTheme.labelMedium),
+              ),
+              IconButton(
+                tooltip: l10n.downloadPem,
+                icon: const Icon(Icons.file_download_outlined),
+                onPressed: _saving ? null : _download,
               ),
               if (masked)
                 IconButton(
@@ -580,6 +638,10 @@ class _Timestamps extends StatelessWidget {
     );
     final expiresAt = secret.expiresAt;
     final status = secret.expiryStatus(now);
+    final days = expiresAt == null ? 0 : daysUntil(expiresAt, now);
+    final relativeExpiry = status == ExpiryStatus.expired
+        ? l10n.expiredDaysAgo(days < 0 ? -days : 0)
+        : l10n.expiresInDays(days < 0 ? 0 : days);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
@@ -589,8 +651,8 @@ class _Timestamps extends StatelessWidget {
             Text(
               key: const Key('expiry'),
               status == ExpiryStatus.expired
-                  ? l10n.expiredOn(dateTime(expiresAt))
-                  : l10n.expiresOn(dateTime(expiresAt)),
+                  ? '${l10n.expiredOn(dateTime(expiresAt))} ($relativeExpiry)'
+                  : '${l10n.expiresOn(dateTime(expiresAt))} ($relativeExpiry)',
               style: style?.copyWith(
                 color: ExpiryHighlight.of(context, secret, now)?.foreground,
               ),
